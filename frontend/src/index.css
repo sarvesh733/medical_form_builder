@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --medical-primary: 0 136 204;
+  --medical-secondary: 79 172 254;
+  --medical-accent: 51 78 172;
+  --medical-dark: 248 250 252;
+  --medical-card: 255 255 255;
+  --medical-neon: 0 204 170;
+  --app-bg: #f1f5f9;
+  --app-bg-image: linear-gradient(rgba(203, 213, 225, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(203, 213, 225, 0.5) 1px, transparent 1px);
+  --neon-glow: 0 4px 12px rgba(0, 136, 204, 0.1);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  --medical-primary: 0 242 254;
+  --medical-secondary: 79 172 254;
+  --medical-accent: 112 0 255;
+  --medical-dark: 10 11 30;
+  --medical-card: 16 18 35;
+  --medical-neon: 0 255 204;
+  --app-bg: #05060f;
+  --app-bg-image: linear-gradient(rgba(10, 11, 30, 0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(10, 11, 30, 0.7) 1px, transparent 1px);
+  --neon-glow: 0 0 10px rgba(0, 242, 254, 0.5), 0 0 20px rgba(0, 242, 254, 0.2);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-bg);
+  background-image: var(--app-bg-image);
+  background-size: 40px 40px;
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(0, 242, 254, 0.1);
+  box-shadow: 0 0 100px rgba(0, 242, 254, 0.5);
+  animation: scanline 8s linear infinite;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.dark body::before {
+  background: rgba(0, 242, 254, 0.1);
+}
+
+@keyframes scanline {
+  0% { top: -100px; }
+  100% { top: 100%; }
+}
+
+@layer components {
+  .glass {
+    @apply bg-medical-card backdrop-blur-xl border border-border-color shadow-2xl;
+  }
+  
+  .dark .glass {
+    @apply border-white/10;
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300 hover:bg-white/[0.08] hover:border-white/20 hover:shadow-neon-glow;
+  }
+
+  .neon-text {
+    @apply text-medical-primary drop-shadow-[0_0_8px_rgba(0,242,254,0.5)];
+  }
+
+  .neon-border {
+    @apply border border-medical-primary/40 shadow-neon-glow;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-gradient-to-r from-medical-primary to-medical-secondary text-white font-bold rounded-lg 
+           hover:shadow-neon-glow hover:scale-105 active:scale-95 transition-all duration-200 border-none;
+  }
+
+  .dark .btn-primary {
+    @apply text-medical-dark;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--medical-dark));
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--medical-primary));
+}
