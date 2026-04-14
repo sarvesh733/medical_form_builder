@@ -12,7 +12,10 @@ import {
   Hash,
   CheckSquare,
   Check,
-  Plus
+  Plus,
+  Grid3X3,
+  Columns,
+  X
 } from 'lucide-react';
 import { TemplateField } from '../types';
 import { useStore } from '../store';
@@ -387,6 +390,222 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
           </div>
         );
       }
+      case 'grid-matrix': {
+        const headers = field.columns || ['Header 1', 'Header 2'];
+        const rows = (formValues[field.id] || [{ id: Date.now() }]) as any[];
+        const { updateField } = useStore.getState();
+
+        return (
+          <div 
+            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-950/20 shadow-xl overflow-hidden group/grid"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse table-fixed min-w-[600px]">
+                <thead>
+                  <tr className="bg-slate-100/80 dark:bg-white/[0.05] border-b border-slate-200 dark:border-white/10">
+                    {headers.map((col, cIdx) => (
+                      <th key={cIdx} className="px-4 py-3 relative group/header">
+                        <input 
+                          type="text"
+                          value={col}
+                          onChange={(e) => {
+                            const newHeaders = [...headers];
+                            newHeaders[cIdx] = e.target.value;
+                            updateField(sectionId, field.id, { columns: newHeaders });
+                          }}
+                          className="bg-transparent border-none text-[10px] font-black text-medical-primary uppercase tracking-widest w-full focus:ring-0 outline-none hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 transition-all"
+                        />
+                        {headers.length > 1 && (
+                          <button 
+                            onClick={() => {
+                              const newHeaders = headers.filter((_, i) => i !== cIdx);
+                              updateField(sectionId, field.id, { columns: newHeaders });
+                            }}
+                            className="absolute -top-1 -right-1 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover/header:opacity-100 transition-all scale-75"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
+                      </th>
+                    ))}
+                    <th className="w-12 px-2 text-center border-l border-slate-200 dark:border-white/10">
+                      <button 
+                        onClick={() => {
+                          const newHeaders = [...headers, `Header ${headers.length + 1}`];
+                          updateField(sectionId, field.id, { columns: newHeaders });
+                        }}
+                        className="p-1.5 rounded-lg bg-medical-primary/10 text-medical-primary hover:bg-medical-primary hover:text-white transition-all shadow-sm"
+                        title="Add Column"
+                      >
+                        <Columns size={12} />
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {rows.map((row, rIdx) => (
+                    <tr key={row.id || rIdx} className="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors group/row">
+                      {headers.map((col, cIdx) => {
+                        const cellKey = `col_${cIdx}`;
+                        return (
+                          <td key={cIdx} className="px-1 py-1 align-top">
+                            <textarea 
+                              rows={1}
+                              placeholder="..."
+                              value={row[cellKey] || ''}
+                              onInput={(e: any) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                              }}
+                              onChange={(e) => {
+                                const newRows = [...rows];
+                                newRows[rIdx] = { ...row, [cellKey]: e.target.value };
+                                setFieldValue(field.id, newRows);
+                              }}
+                              className="w-full bg-transparent border-none rounded-lg p-2 text-[11px] text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-medical-primary/40 outline-none transition-all text-center resize-none min-h-[38px] custom-scrollbar whitespace-pre-wrap"
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className="px-2 py-2 text-center w-12 border-l border-slate-200 dark:border-white/10">
+                        <button 
+                          onClick={() => {
+                            const newRows = rows.filter((_, i) => i !== rIdx);
+                            setFieldValue(field.id, newRows);
+                          }}
+                          className="p-2 text-slate-400 hover:text-rose-500 opacity-0 group-hover/row:opacity-100 transition-all"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button 
+              onClick={() => {
+                setFieldValue(field.id, [...rows, { id: Date.now() }]);
+              }}
+              className="w-full py-2.5 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-medical-primary/10 text-[10px] font-bold text-slate-500 hover:text-medical-primary uppercase tracking-widest flex items-center justify-center gap-2 transition-all border-t border-slate-200 dark:border-white/10"
+            >
+              <Plus size={14} /> Add Row
+            </button>
+          </div>
+        );
+      }
+      case 'doppler-matrix': {
+        const rawQty = formValues['ep_fetus_qty'];
+        const fetusQty = Math.max(1, Math.min(12, parseInt(String(rawQty || '1'))));
+        const vessels = field.vessels || ['Rt. Uterine', 'Lt. Uterine', 'Umbilical', 'MCA', 'DV'];
+        const metrics = ['Syst', 'Diast', 'R.I.'];
+        
+        return (
+          <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/50 dark:bg-slate-950/20 shadow-xl border-dashed">
+             <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-full">
+                  <thead>
+                    <tr className="bg-slate-950 text-white">
+                      <th className="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] border-r border-white/10">Vessel Matrix</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={i} colSpan={3} className={cn(
+                          "px-4 py-3 text-[10px] font-black uppercase text-center border-l border-white/10 bg-slate-900 shadow-inner",
+                          i === 0 ? "text-medical-neon" : "text-white/70"
+                        )}>
+                          Fetus {String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
+                      <th className="px-4 py-2 border-r border-slate-200 dark:border-white/5"></th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <React.Fragment key={i}>
+                          {metrics.map(m => (
+                            <th key={m} className="px-2 py-2 text-[8px] font-black text-slate-500 uppercase text-center border-l first:border-l-0 border-slate-200 dark:border-white/5">{m}</th>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                    {vessels.map((v, vIdx) => (
+                       <tr key={v} className={cn("hover:bg-medical-primary/5 transition-colors", vIdx % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-white/[0.01]")}>
+                          <td className="px-5 py-3 text-xs font-black text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-white/5 uppercase tracking-tight italic">{v}</td>
+                          {Array.from({ length: fetusQty }).map((_, i) => (
+                            <React.Fragment key={i}>
+                              {metrics.map(m => {
+                                const cellId = `${field.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}_${m.toLowerCase()}`;
+                                return (
+                                  <td key={m} className="px-1 py-1 border-r border-slate-200 dark:border-white/5">
+                                    <input 
+                                      type="text"
+                                      placeholder="---"
+                                      value={formValues[cellId] || ''}
+                                      onChange={(e) => setFieldValue(cellId, e.target.value)}
+                                      className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-2.5 placeholder:opacity-20"
+                                    />
+                                  </td>
+                                );
+                              })}
+                            </React.Fragment>
+                          ))}
+                       </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        );
+      }
+      case 'biometry-matrix': {
+        const rawQty = formValues['ep_fetus_qty'];
+        const fetusQty = Math.max(1, Math.min(12, parseInt(String(rawQty || '1'))));
+        const variables = field.variables || ['BPD (cm)', 'OFD (cm)', 'HC (cm)', 'AC (cm)', 'TBD 1', 'TBD 2', 'TCD', 'Foot', 'Heart', 'FM'];
+        
+        return (
+          <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/50 dark:bg-slate-950/20 shadow-2xl">
+             <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-full">
+                  <thead>
+                    <tr className="bg-medical-primary text-white dark:text-medical-dark">
+                      <th className="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] border-r border-white/10">Growth Parameters</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={i} className={cn(
+                          "px-4 py-3 text-[10px] font-black uppercase text-center border-l border-white/10",
+                          i === 0 ? "bg-white/10" : "bg-black/10"
+                        )}>
+                          Fetus {String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                    {variables.map((v, vIdx) => (
+                       <tr key={v} className={cn("hover:bg-medical-primary/5 transition-colors", vIdx % 2 !== 0 ? "bg-slate-50/50 dark:bg-white/[0.01]" : "bg-transparent")}>
+                          <td className="px-5 py-4 bg-slate-100/30 dark:bg-white/[0.01] text-xs font-black text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase tracking-tight">{v}</td>
+                          {Array.from({ length: fetusQty }).map((_, i) => {
+                            const cellId = `${field.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}`;
+                            return (
+                              <td key={i} className="px-1 py-1 border-r border-slate-200 dark:border-white/5">
+                                <input 
+                                  type="text"
+                                  placeholder="--"
+                                  value={formValues[cellId] || ''}
+                                  onChange={(e) => setFieldValue(cellId, e.target.value)}
+                                  className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-3 placeholder:opacity-10"
+                                />
+                              </td>
+                            );
+                          })}
+                       </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        );
+      }
       default:
         return <div className="p-3 bg-red-500/10 text-red-500 text-[10px] rounded-lg border border-red-500/20">Unsupported: {field.type}</div>;
     }
@@ -457,6 +676,7 @@ const getTypeIcon = (type: string) => {
     case 'file': return <UploadCloud size={14} />;
     case 'video': return <PlayCircle size={14} />;
     case 'region-selector': return <Crosshair size={14} />;
+    case 'grid-matrix': return <Grid3X3 size={14} />;
     default: return <Type size={14} />;
   }
 };

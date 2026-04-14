@@ -30,6 +30,7 @@ const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
     { type: 'checkbox', label: 'Multi-Select', icon: <CheckSquare size={16} />, color: 'text-green-400' },
     { type: 'file', label: 'Static Image', icon: <FileUp size={16} />, color: 'text-cyan-400' },
     { type: 'video', label: 'Dynamic Video', icon: <Video size={16} />, color: 'text-rose-400' },
+    { type: 'grid-matrix', label: 'Grid / Matrix', icon: <Layers size={16} />, color: 'text-purple-400' },
     { type: 'region-selector', label: 'Region Map', icon: <Map size={16} />, color: 'text-medical-primary' },
     { type: 'date', label: 'Date/Time', icon: <Calendar size={16} />, color: 'text-yellow-400' },
   ];

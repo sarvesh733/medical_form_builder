@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'video' | 'region-selector' | 'date' | 'checkbox-group' | 'dynamic-table';
+export type FieldType = 'text' | 'textarea' | 'number' | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'video' | 'region-selector' | 'date' | 'checkbox-group' | 'dynamic-table' | 'grid-matrix' | 'doppler-matrix' | 'biometry-matrix';
 
 export interface FieldOption {
   label: string;
@@ -23,6 +23,8 @@ export interface TemplateField {
   columns?: string[];
   tableType?: 'general' | 'partner' | 'pregnancy' | 'external-scan' | 'investigations';
   rows?: number;
+  vessels?: string[];
+  variables?: string[];
   metadata?: {
     scanType?: 'static' | 'dynamic';
     region?: string;
@@ -34,14 +36,14 @@ export interface TemplateSection {
   id: string;
   title: string;
   fields: TemplateField[];
-  layout?: 'standard' | 'clinical-table';
+  layout?: 'standard' | 'clinical-table' | 'clinical-table-doppler' | 'multifetal-biometry' | 'multifetal-doppler';
   isCollapsible?: boolean;
 }
 
 export interface MedicalTemplate {
   id: string;
   name: string;
-  scanType: 'Abdomen/Pelvis' | 'Fetal ECO' | 'Medical History' | 'OB Case History' | 'Whole Abdomen USG';
+  scanType: 'Abdomen/Pelvis' | 'Fetal ECO' | 'Medical History' | 'OB Case History' | '2nd and 3rd trimester OB USG' | 'OB-USG-Early Pregnancy';
   sections: TemplateSection[];
   version: string;
   createdAt: string;

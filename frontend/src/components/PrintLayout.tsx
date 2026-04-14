@@ -4,6 +4,33 @@ import { Activity } from 'lucide-react';
 
 const PrintLayout: React.FC = () => {
     const { activeTemplate, formValues } = useStore();
+    
+    const isFieldVisible = (field: any) => {
+        if (!field.conditional) return true;
+        const { fieldId, operator, value } = field.conditional;
+        const targetValue = formValues[fieldId];
+        
+        if (operator === 'equals') return String(targetValue) === String(value);
+        if (operator === 'not_equals') return String(targetValue) !== String(value);
+        if (operator === 'contains') {
+          if (Array.isArray(targetValue)) return targetValue.includes(value);
+          if (typeof targetValue === 'string') return targetValue.includes(value);
+          return false;
+        }
+        if (operator === 'truthy') return !!targetValue;
+        if (operator === 'greater_than') return Number(targetValue) > Number(value);
+        if (operator === 'less_than') return Number(targetValue) < Number(value);
+        return true;
+    };
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr || !dateStr.includes('-')) return dateStr;
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
+    };
 
     if (!activeTemplate) return null;
 
@@ -16,8 +43,8 @@ const PrintLayout: React.FC = () => {
                 {/* Header section with Mediscan branding */}
                 <div className="flex justify-between items-center mb-10 pt-4">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-[1.2rem] bg-gradient-to-br from-medical-primary to-medical-accent flex items-center justify-center text-white dark:text-medical-dark shadow-xl shrink-0">
-                            <Activity size={28} strokeWidth={3} />
+                        <div className="w-14 h-14 rounded-[1.2rem] bg-white flex items-center justify-center shadow-xl shrink-0 overflow-hidden border border-slate-100">
+                            <img src="/logo.png" alt="Mediscan Logo" className="w-11 h-11 object-contain" />
                         </div>
                         <div>
                             <h1 className="text-3xl font-black tracking-tighter text-slate-950 uppercase leading-none">
@@ -35,16 +62,71 @@ const PrintLayout: React.FC = () => {
                 <div className="h-px w-full bg-slate-100 mb-10" />
 
                 <div className="space-y-8">
-                    {activeTemplate.sections.map((section) => (
-                        <div key={section.id} className="break-inside-avoid">
+                    {activeTemplate.sections.map((section) => {
+                        const visibleFields = section.fields.filter(isFieldVisible);
+                        if (visibleFields.length === 0) return null;
+
+                        return (
+                            <div key={section.id} className="break-inside-avoid">
                             {/* Professional Section Header */}
                             <div className="border-t-2 border-slate-950 pt-2 mb-2 flex items-center justify-between">
                                 <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-900">{section.title}</h3>
                                 <div className="text-[9px] font-mono text-slate-400">REF_{section.id.substring(0, 4).toUpperCase()}</div>
                             </div>
 
-                            {/* Data Matrix / Clinical Table Selection */}
-                            {section.layout === 'clinical-table' ? (
+                            {/* Doppler Matrix Layout */}
+                            {section.layout === 'clinical-table-doppler' ? (
+                                <div className="border-[1.5px] border-slate-200 overflow-hidden">
+                                     <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200 text-slate-900 border-b border-slate-200">
+                                        <thead>
+                                            <tr className="bg-slate-950 text-white">
+                                                <th rowSpan={2} className="w-[15%] px-3 py-2 text-[8px] font-black uppercase tracking-tight border-r border-slate-700">Vessel</th>
+                                                <th colSpan={3} className="px-3 py-1 text-[8px] font-black uppercase tracking-widest text-center border-r border-slate-700 bg-slate-900">Fetus A</th>
+                                                {formValues['ep_fetus_qty'] > 1 && (
+                                                    <th colSpan={3} className="px-3 py-1 text-[8px] font-black uppercase tracking-widest text-center bg-slate-800">Fetus B</th>
+                                                )}
+                                            </tr>
+                                            <tr className="bg-slate-100 text-slate-600 border-t border-slate-200">
+                                                <th className="px-2 py-1 text-[7px] font-black uppercase text-center border-r border-slate-300">Syst</th>
+                                                <th className="px-2 py-1 text-[7px] font-black uppercase text-center border-r border-slate-300">Diast</th>
+                                                <th className="px-2 py-1 text-[7px] font-black uppercase text-center border-r border-slate-400">R.I.</th>
+                                                {formValues['ep_fetus_qty'] > 1 && (
+                                                    <>
+                                                        <th className="px-2 py-1 text-[7px] font-black uppercase text-center border-r border-slate-300">Syst</th>
+                                                        <th className="px-2 py-1 text-[7px] font-black uppercase text-center border-r border-slate-300">Diast</th>
+                                                        <th className="px-2 py-1 text-[7px] font-black uppercase text-center">R.I.</th>
+                                                    </>
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-200">
+                                            {section.fields.reduce((acc, curr, idx, arr) => {
+                                                // Group fields by 6 (since each row has 6 slots in schema)
+                                                if (idx % 6 === 0) {
+                                                    acc.push(arr.slice(idx, idx + 6));
+                                                }
+                                                return acc;
+                                            }, [] as any[][]).map((rowFields, rIdx) => (
+                                                <tr key={rIdx} className={rIdx % 2 !== 0 ? 'bg-slate-50/20' : ''}>
+                                                    <td className="px-3 py-2 bg-slate-50/80 border-r border-slate-200 text-[8px] font-black text-slate-600 uppercase tracking-tight">
+                                                        {rowFields[0].label}
+                                                    </td>
+                                                    <td className="px-2 py-2 border-r border-slate-200 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[0].id] || '---'}</td>
+                                                    <td className="px-2 py-2 border-r border-slate-200 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[1].id] || '---'}</td>
+                                                    <td className="px-2 py-2 border-r border-slate-400 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[2].id] || '---'}</td>
+                                                    {formValues['ep_fetus_qty'] > 1 && (
+                                                        <>
+                                                            <td className="px-2 py-2 border-r border-slate-200 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[3].id] || '---'}</td>
+                                                            <td className="px-2 py-2 border-r border-slate-200 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[4].id] || '---'}</td>
+                                                            <td className="px-2 py-2 text-[9px] font-bold text-slate-950 text-center">{formValues[rowFields[5].id] || '---'}</td>
+                                                        </>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                     </table>
+                                </div>
+                            ) : section.layout === 'clinical-table' ? (
                                 <div className="border-[1.5px] border-slate-200 overflow-hidden">
                                     <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200 text-slate-900">
                                         <thead>
@@ -80,20 +162,24 @@ const PrintLayout: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="border-[1.5px] border-slate-200 divide-y divide-slate-200">
-                                    {section.fields.map((field) => {
+                                    {visibleFields.map((field) => {
                                         const value = formValues[field.id];
-                                        if (field.type === 'dynamic-table') return null;
+                                        if (['dynamic-table', 'grid-matrix', 'doppler-matrix', 'biometry-matrix'].includes(field.type)) return null;
 
-                                        const displayValue = Array.isArray(value)
+                                        let displayValue = Array.isArray(value)
                                             ? value.length > 0 ? value.join(', ') : '---'
                                             : value || '---';
+
+                                        if (field.type === 'date' && value) {
+                                            displayValue = formatDate(String(value));
+                                        }
 
                                         return (
                                             <div key={field.id} className="flex min-h-[28px] divide-x divide-slate-200">
                                                 <div className="w-[35%] bg-slate-50/80 px-4 py-2 flex items-center shrink-0">
                                                     <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{field.label || 'Note'}</label>
                                                 </div>
-                                                <div className="flex-1 px-4 py-2 text-[11px] font-bold text-slate-950 break-words whitespace-pre-wrap flex items-center leading-relaxed">
+                                                <div className="flex-1 px-4 py-2 text-[11px] font-bold text-slate-950 break-all whitespace-pre-wrap flex items-center leading-relaxed">
                                                     {displayValue}
                                                 </div>
                                             </div>
@@ -102,12 +188,12 @@ const PrintLayout: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Integrated Tables */}
-                            {section.fields.filter(f => f.type === 'dynamic-table').map(tableField => {
+                            {/* Integrated Tables (Dynamic) */}
+                            {visibleFields.filter(f => f.type === 'dynamic-table').map(tableField => {
                                 const rows = (formValues[tableField.id] || []) as any[];
                                 const headers = tableField.columns || [];
                                 return (
-                                    <div key={tableField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 overflow-hidden">
+                                    <div key={tableField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 overflow-hidden break-inside-avoid shadow-sm">
                                         <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
                                             <thead>
                                                 <tr className="bg-slate-100">
@@ -123,17 +209,21 @@ const PrintLayout: React.FC = () => {
                                                     <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
                                                         {headers.map(header => {
                                                             const key = header.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                                                            let val = row[key] || row[header.toLowerCase()] || '---';
+                                                            if (header.toLowerCase().includes('date') && val !== '---') {
+                                                                val = formatDate(String(val));
+                                                            }
                                                             return (
-                                                                <td key={header} className="px-3 py-1.5 text-[10px] font-bold text-slate-800 border-r border-slate-100 last:border-r-0">
-                                                                    {row[key] || row[header.toLowerCase()] || '---'}
+                                                                <td key={header} className="px-3 py-1.5 text-[9px] font-bold text-slate-800 border-r border-slate-100 last:border-r-0">
+                                                                    {val}
                                                                 </td>
                                                             );
                                                         })}
                                                     </tr>
                                                 )) : (
                                                     <tr>
-                                                        <td colSpan={headers.length} className="px-4 py-6 text-center text-[9px] font-bold text-slate-300 uppercase tracking-widest italic bg-slate-50/10">
-                                                            Pending Clinical Evaluation
+                                                        <td colSpan={headers.length} className="px-4 py-4 text-center text-[8px] font-bold text-slate-300 uppercase tracking-widest italic bg-slate-50/10">
+                                                            Clinical Findings Pending
                                                         </td>
                                                     </tr>
                                                 )}
@@ -142,8 +232,138 @@ const PrintLayout: React.FC = () => {
                                     </div>
                                 );
                             })}
+
+                            {/* Grid / Matrix Printer */}
+                            {visibleFields.filter(f => f.type === 'grid-matrix').map(gridField => {
+                                const headers = gridField.columns || ['Header 1', 'Header 2'];
+                                const rows = (formValues[gridField.id] || []) as any[];
+                                return (
+                                    <div key={gridField.id} className="mt-4 break-inside-avoid mb-6">
+                                        <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-2 px-1">
+                                            {gridField.label || 'Grid Matrix'}
+                                        </div>
+                                        <div className="border-[1.5px] border-slate-950 overflow-hidden">
+                                            <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr className="bg-slate-50 border-b border-slate-950">
+                                                        {headers.map((header, hIdx) => (
+                                                            <th key={hIdx} className="px-3 py-2 text-[8px] font-black text-slate-900 uppercase tracking-widest border-r border-slate-200 last:border-r-0">
+                                                                {header}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-200">
+                                                    {rows.length > 0 ? rows.map((row, rIdx) => (
+                                                        <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                            {headers.map((_, hIdx) => {
+                                                                const key = `col_${hIdx}`;
+                                                                return (
+                                                                    <td key={hIdx} className="px-3 py-2 text-[10px] font-bold text-slate-800 border-r border-slate-100 last:border-r-0 leading-tight">
+                                                                        {row[key] || '---'}
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    )) : (
+                                                        <tr>
+                                                            <td colSpan={headers.length} className="px-4 py-8 text-center text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">
+                                                                Pending Data Entry
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Biometry Matrix Printer */}
+                            {visibleFields.filter(f => f.type === 'biometry-matrix').map(bioField => {
+                                const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
+                                const variables = bioField.variables || [];
+                                return (
+                                    <div key={bioField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden break-inside-avoid shadow-sm">
+                                        <table className="w-full text-left border-collapse divide-y divide-slate-200">
+                                            <thead>
+                                                <tr className="bg-slate-900 text-white">
+                                                    <th className="px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Growth Parameters</th>
+                                                    {Array.from({ length: fetusQty }).map((_, i) => (
+                                                        <th key={i} className="px-3 py-2 text-[8px] font-black uppercase tracking-widest text-center border-r border-slate-700 last:border-r-0">FETUS {String.fromCharCode(65 + i)}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200">
+                                                {variables.map((v, vIdx) => (
+                                                    <tr key={v} className={vIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                        <td className="px-3 py-1 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200">{v}</td>
+                                                        {Array.from({ length: fetusQty }).map((_, i) => {
+                                                            const cellId = `${bioField.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}`;
+                                                            return (
+                                                                <td key={i} className="px-3 py-1 text-[10px] font-bold text-slate-950 text-center border-r border-slate-100 last:border-r-0">
+                                                                    {formValues[cellId] || '---'}
+                                                                </td>
+                                                            );
+                                                        })}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Doppler Matrix Printer */}
+                            {visibleFields.filter(f => f.type === 'doppler-matrix').map(dopField => {
+                                const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
+                                const vessels = dopField.vessels || [];
+                                const metrics = ['Syst', 'Diast', 'R.I.'];
+                                return (
+                                    <div key={dopField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden break-inside-avoid">
+                                        <table className="w-full text-left border-collapse divide-y divide-slate-200">
+                                            <thead>
+                                                <tr className="bg-slate-950 text-white">
+                                                    <th rowSpan={2} className="px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Hemodynamics</th>
+                                                    {Array.from({ length: fetusQty }).map((_, i) => (
+                                                        <th key={i} colSpan={3} className="px-3 py-1 text-[8px] font-black uppercase tracking-widest text-center border-l border-slate-700">Fetus {String.fromCharCode(65 + i)}</th>
+                                                    ))}
+                                                </tr>
+                                                <tr className="bg-slate-100 border-t border-slate-200">
+                                                    {Array.from({ length: fetusQty }).map((_, i) => (
+                                                        <React.Fragment key={i}>
+                                                            {metrics.map(m => (
+                                                                <th key={m} className="px-1 py-1 text-[7px] font-black uppercase text-center border-l border-slate-200 first:border-l-0">{m}</th>
+                                                            ))}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200">
+                                                {vessels.map((v, vIdx) => (
+                                                    <tr key={v} className={vIdx % 2 !== 0 ? 'bg-slate-50/20' : ''}>
+                                                        <td className="px-3 py-1.5 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200 italic">{v}</td>
+                                                        {Array.from({ length: fetusQty }).map((_, i) => (
+                                                            <React.Fragment key={i}>
+                                                                {metrics.map(m => {
+                                                                    const cellId = `${dopField.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}_${m.toLowerCase()}`;
+                                                                    return (
+                                                                        <td key={m} className="px-1 py-1 text-[10px] font-bold text-slate-900 text-center border-l border-slate-100 first:border-l-0">
+                                                                            {formValues[cellId] || '---'}
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </React.Fragment>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    ))}
+                    );})}
                 </div>
 
                 {/* Footer Signature Area */}

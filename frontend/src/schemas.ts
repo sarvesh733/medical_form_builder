@@ -559,68 +559,126 @@ export const DEFAULT_SCHEMAS: Record<string, Partial<MedicalTemplate>> = {
       }
     ]
   },
-  'Whole Abdomen USG': {
-    name: 'USG Scan Finding Workflow',
-    scanType: 'Whole Abdomen USG',
-    version: '3.0.0',
+  '2nd and 3rd trimester OB USG': {
+    name: 'Advanced 2nd/3rd Trimester Scan',
+    scanType: '2nd and 3rd trimester OB USG',
+    version: '2.0.0',
     sections: [
       {
-        id: 'usg_context',
-        title: 'Scan Acquisition Context',
+        id: 'ob23_context',
+        title: 'Patient & Fetal Context',
         fields: [
-          { id: 'mode', label: 'Scan Type', type: 'dropdown', options: [{ label: 'TA - Transabdominal', value: 'TA' }, { label: 'TV - Transvaginal', value: 'TV' }, { label: 'Both', value: 'Both' }] },
-          { id: 'fetus_qty', label: 'Number of Fetuses', type: 'number' },
+          { id: 'ep_fetus_qty', label: 'Number of Fetuses', type: 'number', defaultValue: 1 }
+        ]
+      },
+
+      {
+        id: 'ob23_biometry_matrix',
+        title: 'Fetal Biometry & Growth Matrix',
+        fields: [
           {
-            id: 'chorio',
-            label: 'Chorionicity',
-            type: 'dropdown',
-            options: [{ label: 'DCDA', value: 'DCDA' }, { label: 'MCDA', value: 'MCDA' }, { label: 'MCMA', value: 'MCMA' }],
-            conditional: { fieldId: 'fetus_qty', operator: 'greater_than', value: 1 }
+            id: 'bio_matrix',
+            label: 'Growth Indicators',
+            type: 'biometry-matrix',
+            variables: [
+              'BPD (cm)', 'OFD (cm)', 'HC (cm)', 'AC (cm)', 'FL (cm)', 'TBD 1', 'TBD 2',
+              'FL/Epiphysis', 'Tibia/Epiphysis', 'Fibula/Epiphysis', 'Humerus/Epiphysis', 'Radius', 'Ulna',
+              'Cerebellum (TCD)', 'Foot length', 'NT', 'Liquor', 'AFI', 'Placenta', 'Umbilical cord', 'FH / rate', 'FM'
+            ]
           }
         ]
       },
       {
-        id: 'biometry',
-        title: 'Fetal Biometry Indicators',
+        id: 'ob23_anatomy',
+        title: 'Organ Morphology & System Survey',
         fields: [
-          { id: 'crl', label: 'CRL (mm)', type: 'number' },
-          { id: 'bpd', label: 'BPD (mm)', type: 'number' },
-          { id: 'fl', label: 'FL (mm)', type: 'number' },
-          { id: 'nt', label: 'NT (mm)', type: 'number' },
-          { id: 'nb', label: 'NB (Nasalar Bone)', type: 'number' },
-          { id: 'dv', label: 'Ductus Venosus (Dv)', type: 'number' },
-          { id: 'liq', label: 'Liquor Volume', type: 'number' }
+          {
+            id: 'anatomy_check', label: 'System Review (Select Abnormalities)', type: 'checkbox-group', options: [
+              { label: 'CNS', value: 'cns' }, { label: 'CVS', value: 'cvs' }, { label: 'GIT', value: 'git' }, { label: 'GUT', value: 'gut' },
+              { label: 'Skeletal', value: 'skel' }, { label: 'Facial', value: 'face' }, { label: 'Hydrops', value: 'hydro' }, { label: 'Others', value: 'oth' }
+            ]
+          }
         ]
       },
       {
-        id: 'anatomy_survey',
-        title: 'Organ Morphology (Anatomy)',
+        id: 'ob23_doppler_matrix',
+        title: 'Hemodynamic Doppler Matrix',
         fields: [
-          { id: 'situs', label: 'Organ Situs', type: 'textarea' },
-          { id: '4ch', label: 'Heart: 4-Chamber', type: 'textarea' },
-          { id: 'skull', label: 'Skull / Neuro', type: 'textarea' },
-          { id: 'spine', label: 'Spine Morphology', type: 'textarea' },
-          { id: 'stomach', label: 'Stomach Bubble', type: 'textarea' },
-          { id: 'bladder', label: 'Bladder Filling', type: 'textarea' },
-          { id: 'kidneys', label: 'Renal Architecture', type: 'textarea' }
+          {
+            id: 'dop_matrix',
+            label: 'Hemodynamics',
+            type: 'doppler-matrix',
+            vessels: ['Rt. Uterine', 'Lt. Uterine', 'Umbilical', 'MCA', 'DV']
+          }
         ]
       },
       {
-        id: 'maternal_doppler',
-        title: 'Maternal Assessment / Doppler',
+        id: 'ob23_prev_scans',
+        title: 'Longitudinal Growth Tracking (Previous Scans)',
         fields: [
-          { id: 'doppler_rut', label: 'RUT Doppler', type: 'textarea' },
-          { id: 'doppler_lut', label: 'LUT Doppler', type: 'textarea' },
-          { id: 'cx', label: 'Cervical Morphology (CX)', type: 'textarea' }
+          {
+            id: 'prev_scan_table',
+            label: 'Historical Data',
+            type: 'dynamic-table',
+            columns: ['Date / Centre', 'CRL', 'BPD (cm)', 'HC (cm)', 'AC (cm)', 'FL (cm)', 'LMPAge', 'USG age', 'Remarks']
+          }
         ]
       },
       {
-        id: 'risk',
-        title: 'Risk Prediction Models',
+        id: 'ob23_remarks',
+        title: 'Detailed Clinical Impressions',
         fields: [
-          { id: 'fts', label: 'FTS (Result)', type: 'textarea' },
-          { id: 'age_risk', label: 'Age Risk Factor', type: 'textarea' },
-          { id: 'post_risk', label: 'Post-test Risk', type: 'textarea' }
+          { id: 'detailed_comments', label: 'Case Summary', type: 'textarea', rows: 6, placeholder: 'Enter detailed findings and growth analysis...' }
+        ]
+      }
+    ]
+  },
+  'OB-USG-Early Pregnancy': {
+    name: 'Early Pregnancy Obstetric Scan',
+    scanType: 'OB-USG-Early Pregnancy',
+    version: '1.0.0',
+    sections: [
+      {
+        id: 'ep_context',
+        title: 'Initial Assessment',
+        fields: [
+          { id: 'ep_fetus_qty', label: 'Number of Fetuses', type: 'number', placeholder: 'e.g. 1' }
+        ]
+      },
+      {
+        id: 'ep_fetus_a',
+        title: 'Fetus A Parameters',
+        fields: [
+          { id: 'gs_a', label: 'Gestational Sac (Fetus A)', type: 'textarea', placeholder: 'Size / Position...' },
+          { id: 'ys_a', label: 'Yolk Sac (Fetus A)', type: 'textarea', placeholder: 'Appearance...' },
+          { id: 'crl_a', label: 'CRL (Fetus A)', type: 'textarea', placeholder: 'Measurement...' },
+          { id: 'hr_a', label: 'Heart Rate (Fetus A)', type: 'textarea', placeholder: 'FH/rate...' },
+          { id: 'lt_ov_a', label: 'Lt. Ovary (Position A)', type: 'textarea' },
+          { id: 'rt_ov_a', label: 'Rt. Ovary (Position A)', type: 'textarea' }
+        ]
+      },
+      {
+        id: 'ep_fetus_b',
+        title: 'Fetus B Parameters',
+        fields: [
+          { id: 'gs_b', label: 'Gestational Sac (Fetus B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } },
+          { id: 'ys_b', label: 'Yolk Sac (Fetus B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } },
+          { id: 'crl_b', label: 'CRL (Fetus B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } },
+          { id: 'hr_b', label: 'Heart Rate (Fetus B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } },
+          { id: 'lt_ov_b', label: 'Lt. Ovary (Position B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } },
+          { id: 'rt_ov_b', label: 'Rt. Ovary (Position B)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 1 } }
+        ]
+      },
+      {
+        id: 'ep_fetus_c',
+        title: 'Fetus C Parameters',
+        fields: [
+          { id: 'gs_c', label: 'Gestational Sac (Fetus C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } },
+          { id: 'ys_c', label: 'Yolk Sac (Fetus C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } },
+          { id: 'crl_c', label: 'CRL (Fetus C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } },
+          { id: 'hr_c', label: 'Heart Rate (Fetus C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } },
+          { id: 'lt_ov_c', label: 'Lt. Ovary (Position C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } },
+          { id: 'rt_ov_c', label: 'Rt. Ovary (Position C)', type: 'textarea', conditional: { fieldId: 'ep_fetus_qty', operator: 'greater_than', value: 2 } }
         ]
       }
     ]

@@ -28,9 +28,9 @@ const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview }) => {
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-          className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-medical-primary to-medical-accent flex items-center justify-center shadow-neon-glow group"
+          className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-neon-glow group overflow-hidden border border-medical-primary/20"
         >
-          <Activity className="text-white dark:text-medical-dark group-hover:scale-125 transition-transform" strokeWidth={3} />
+          <img src="/logo.png" alt="Mediscan Logo" className="w-10 h-10 object-contain group-hover:scale-110 transition-transform" />
         </motion.div>
         <div>
           <h2 className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase leading-none">

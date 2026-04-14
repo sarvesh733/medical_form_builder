@@ -129,7 +129,10 @@ const Canvas: React.FC = () => {
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="group relative"
+              className={cn(
+                "group relative",
+                section.fields.length > 0 && section.fields.filter(isFieldVisible).length === 0 && "hidden"
+              )}
               onClick={() => useStore.getState().setActiveSection(section.id)}
             >
               {/* Section Controls */}
@@ -217,7 +220,7 @@ const Canvas: React.FC = () => {
                         </div>
                       );
                     }
-                    const isFullWidth = field.type === 'dynamic-table' || field.type === 'textarea';
+                    const isFullWidth = field.type === 'dynamic-table' || field.type === 'grid-matrix' || field.type === 'textarea' || field.type === 'doppler-matrix' || field.type === 'biometry-matrix';
                     
                     return (
                       <div key={field.id} className={cn(

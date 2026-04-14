@@ -70,7 +70,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNew }) => {
     { name: 'Medical History', icon: '📋', description: 'External scans & history' },
     { name: 'OB Case History', icon: '🤰', description: 'Obstetric specialized tracking (Full)' },
     { name: 'OB Case History + FTS', icon: '🧪', description: 'First Trimester Screening & ART' },
-    { name: 'Whole Abdomen USG', icon: '🔍', description: 'Full USG scan profile' },
+    { name: '2nd and 3rd trimester OB USG', icon: '👶', description: 'Advanced growth & Doppler assessment' },
+    { name: 'OB-USG-Early Pregnancy', icon: '🌱', description: 'Early gestation viability & biometry' },
   ];
 
   const handleSelect = (typeName: string) => {
@@ -89,46 +90,48 @@ const Dashboard: React.FC<DashboardProps> = ({ onNew }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto custom-scrollbar">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-6xl font-black mb-4 bg-gradient-to-r from-medical-primary via-medical-secondary dark:via-white to-medical-accent bg-clip-text text-transparent uppercase tracking-tighter">
-          Template Studio
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 max-w-lg mx-auto font-medium">
-          Create sophisticated, AI-enhanced medical reporting templates with our advanced schema builder.
-        </p>
-      </motion.div>
+    <div className="flex-1 flex flex-col items-center p-8 overflow-y-auto custom-scrollbar">
+      <div className="my-auto w-full flex flex-col items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-6xl font-black mb-4 bg-gradient-to-r from-medical-primary via-medical-secondary dark:via-white to-medical-accent bg-clip-text text-transparent uppercase tracking-tighter py-2">
+            Template Studio
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 max-w-lg mx-auto font-medium">
+            Create sophisticated, AI-enhanced medical reporting templates with our advanced schema builder.
+          </p>
+        </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
-        {types.map((type, idx) => (
-          <motion.button
-            key={type.name}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: idx * 0.1 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-            onClick={() => handleSelect(type.name)}
-            className="glass transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:border-medical-primary/50 p-6 rounded-3xl text-left flex flex-col gap-4 group relative overflow-hidden shadow-xl"
-          >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-               <span className="text-6xl font-bold">{type.icon}</span>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-medical-primary/10 flex items-center justify-center border border-medical-primary/20 group-hover:border-medical-primary transition-all">
-              <Plus className="text-medical-primary" size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-medical-primary transition-colors">{type.name}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{type.description}</p>
-            </div>
-            <div className="mt-4 flex items-center text-xs font-black text-medical-primary opacity-0 group-hover:opacity-100 transition-all uppercase tracking-widest">
-              CREATE_STUDY <ChevronRight size={14} className="ml-1" />
-            </div>
-          </motion.button>
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
+          {types.map((type, idx) => (
+            <motion.button
+              key={type.name}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              onClick={() => handleSelect(type.name)}
+              className="glass transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:border-medical-primary/50 p-6 rounded-3xl text-left flex flex-col gap-4 group relative overflow-hidden shadow-xl"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                 <span className="text-6xl font-bold">{type.icon}</span>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-medical-primary/10 flex items-center justify-center border border-medical-primary/20 group-hover:border-medical-primary transition-all">
+                <Plus className="text-medical-primary" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white group-hover:text-medical-primary transition-colors">{type.name}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{type.description}</p>
+              </div>
+              <div className="mt-4 flex items-center text-xs font-black text-medical-primary opacity-0 group-hover:opacity-100 transition-all uppercase tracking-widest">
+                CREATE_STUDY <ChevronRight size={14} className="ml-1" />
+              </div>
+            </motion.button>
+          ))}
+        </div>
       </div>
     </div>
   );
