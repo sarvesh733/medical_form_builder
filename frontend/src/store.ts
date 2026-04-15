@@ -1,12 +1,10 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { MedicalTemplate, TemplateStore, TemplateSection, TemplateField } from './types';
-import { DEFAULT_SCHEMAS } from './schemas';
+import { fetchTemplates, saveTemplate } from './api/templates';
 
 export const useStore = create<TemplateStore>()(
-  persist(
-    (set) => ({
-      templates: Object.values(DEFAULT_SCHEMAS) as MedicalTemplate[],
+    (set, get) => ({
+      templates: [],
       activeTemplate: null,
       selectedFieldId: null,
       activeSectionId: null,
@@ -22,10 +20,43 @@ export const useStore = create<TemplateStore>()(
       },
 
       setTemplates: (templates: MedicalTemplate[]) => set({ templates }),
+      loadTemplatesFromApi: async () => {
+        const templates = await fetchTemplates();
+        set((state: TemplateStore) => {
+          const nextActiveTemplate =
+            state.activeTemplate && templates.some((t) => t.id === state.activeTemplate?.id)
+              ? templates.find((t) => t.id === state.activeTemplate?.id) ?? null
+              : state.activeTemplate;
+
+          return {
+            templates,
+            activeTemplate: nextActiveTemplate,
+            formValues: {}, // Clear form values when loading templates
+          };
+        });
+      },
+      saveActiveTemplateToApi: async () => {
+        const { activeTemplate, templates } = get();
+        if (!activeTemplate) {
+          throw new Error('No active template selected');
+        }
+
+        const savedTemplate = await saveTemplate(activeTemplate);
+        const exists = templates.some((template) => template.id === savedTemplate.id);
+
+        set((state: TemplateStore) => ({
+          templates: exists
+            ? state.templates.map((template) => (template.id === savedTemplate.id ? savedTemplate : template))
+            : [savedTemplate, ...state.templates.filter((template) => template.id !== activeTemplate.id)],
+          activeTemplate: savedTemplate,
+          formValues: {}, // Clear all form values after saving template structure
+        }));
+      },
       setActiveTemplate: (id: string | null) => set((state: TemplateStore) => ({ 
         activeTemplate: state.templates.find(t => t.id === id) || null,
         activeSectionId: null,
-        selectedFieldId: null
+        selectedFieldId: null,
+        formValues: {}, // Clear form values when switching templates
       })),
       
       updateTemplate: (template: MedicalTemplate) => set((state: TemplateStore) => ({
@@ -129,11 +160,9 @@ export const useStore = create<TemplateStore>()(
       setFieldValue: (id: string, value: any) => set((state: TemplateStore) => ({
         formValues: { ...state.formValues, [id]: value }
       })),
+      setFormValues: (values: Record<string, any>) => set({
+        formValues: values,
+      }),
       clearFormValues: () => set({ formValues: {} })
-    }),
-    {
-      name: 'medical-template-storage',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
+    })
 );

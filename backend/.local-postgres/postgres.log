@@ -1,0 +1,69 @@
+2026-04-14 17:37:18.868 IST [28520] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-04-14 17:37:18.874 IST [28520] LOG:  listening on IPv6 address "::1", port 5433
+2026-04-14 17:37:18.874 IST [28520] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-04-14 17:37:18.986 IST [27292] LOG:  database system was shut down at 2026-04-14 17:36:59 IST
+2026-04-14 17:37:19.038 IST [28520] LOG:  database system is ready to accept connections
+2026-04-14 17:38:13.590 IST [27836] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 17:38:13.686 IST [7352] ERROR:  relation "_prisma_migrations" does not exist at character 126
+2026-04-14 17:38:13.686 IST [7352] STATEMENT:  SELECT "id", "checksum", "finished_at", "migration_name", "logs", "rolled_back_at", "started_at", "applied_steps_count" FROM "_prisma_migrations" ORDER BY "started_at" ASC
+2026-04-14 17:38:14.280 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 17:38:18.299 IST [26256] LOG:  checkpoint complete: wrote 967 buffers (5.9%); 1 WAL file(s) added, 0 removed, 0 recycled; write=0.121 s, sync=3.665 s, total=4.020 s; sync files=301, longest=0.067 s, average=0.013 s; distance=9118 kB, estimate=9118 kB; lsn=0/1E5F150, redo lsn=0/1E5F118
+2026-04-14 17:38:19.136 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 17:38:19.274 IST [26256] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.005 s, sync=0.056 s, total=0.139 s; sync files=4, longest=0.023 s, average=0.014 s; distance=4560 kB, estimate=8662 kB; lsn=0/22D3378, redo lsn=0/22D3340
+2026-04-14 17:38:20.039 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 17:38:21.029 IST [26256] LOG:  checkpoint complete: wrote 49 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.039 s, sync=0.889 s, total=0.991 s; sync files=41, longest=0.064 s, average=0.022 s; distance=4723 kB, estimate=8268 kB; lsn=0/2770308, redo lsn=0/27702D0
+2026-04-14 17:38:21.772 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 17:38:21.898 IST [26256] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.057 s, total=0.127 s; sync files=4, longest=0.024 s, average=0.015 s; distance=4561 kB, estimate=7898 kB; lsn=0/2BE4738, redo lsn=0/2BE4700
+2026-04-14 17:38:22.458 IST [7352] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 17:43:21.891 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 17:43:30.023 IST [26256] LOG:  checkpoint complete: wrote 71 buffers (0.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=7.626 s, sync=0.418 s, total=8.133 s; sync files=71, longest=0.021 s, average=0.006 s; distance=331 kB, estimate=7141 kB; lsn=0/2C373E0, redo lsn=0/2C373A8
+2026-04-14 17:44:05.544 IST [24824] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 17:45:52.009 IST [26236] ERROR:  insert or update on table "Patient" violates foreign key constraint "Patient_created_by_fkey"
+2026-04-14 17:45:52.009 IST [26236] DETAIL:  Key (created_by)=(<existing-user-id>) is not present in table "User".
+2026-04-14 17:45:52.009 IST [26236] STATEMENT:  INSERT INTO "public"."Patient" ("patient_id","name","created_by","created_at","updated_at") VALUES ($1,$2,$3,$4,$5) RETURNING "public"."Patient"."patient_id", "public"."Patient"."name", "public"."Patient"."created_by", "public"."Patient"."created_at", "public"."Patient"."updated_at"
+2026-04-14 17:48:21.037 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 17:48:22.619 IST [26256] LOG:  checkpoint complete: wrote 13 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.304 s, sync=0.184 s, total=1.582 s; sync files=10, longest=0.027 s, average=0.019 s; distance=8 kB, estimate=6428 kB; lsn=0/2C395C0, redo lsn=0/2C39588
+2026-04-14 17:54:07.338 IST [23476] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 17:58:21.635 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 17:58:22.593 IST [26256] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.770 s, sync=0.099 s, total=0.959 s; sync files=6, longest=0.028 s, average=0.017 s; distance=1 kB, estimate=5785 kB; lsn=0/2C39D40, redo lsn=0/2C39D08
+2026-04-14 18:08:13.044 IST [29032] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:09:48.174 IST [28104] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:09:49.367 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 18:09:49.545 IST [26256] LOG:  checkpoint complete: wrote 6 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.007 s, sync=0.086 s, total=0.179 s; sync files=6, longest=0.019 s, average=0.015 s; distance=4724 kB, estimate=5679 kB; lsn=0/30D7018, redo lsn=0/30D6FE0
+2026-04-14 18:09:50.586 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 18:09:51.223 IST [26256] LOG:  checkpoint complete: wrote 22 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.016 s, sync=0.419 s, total=0.637 s; sync files=13, longest=0.045 s, average=0.033 s; distance=4739 kB, estimate=5585 kB; lsn=0/3577F48, redo lsn=0/3577F10
+2026-04-14 18:09:52.634 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 18:09:52.759 IST [26256] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.064 s, total=0.125 s; sync files=4, longest=0.022 s, average=0.016 s; distance=4725 kB, estimate=5499 kB; lsn=0/3A15448, redo lsn=0/3A15410
+2026-04-14 18:09:53.906 IST [26256] LOG:  checkpoint starting: immediate force wait
+2026-04-14 18:09:54.040 IST [26256] LOG:  checkpoint complete: wrote 4 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.064 s, total=0.135 s; sync files=4, longest=0.023 s, average=0.016 s; distance=4725 kB, estimate=5422 kB; lsn=0/3EB2A48, redo lsn=0/3EB2A10
+2026-04-14 18:09:54.204 IST [25076] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:14:22.658 IST [13444] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:14:53.042 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 18:14:56.363 IST [26256] LOG:  checkpoint complete: wrote 27 buffers (0.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=2.859 s, sync=0.403 s, total=3.322 s; sync files=25, longest=0.083 s, average=0.017 s; distance=71 kB, estimate=4886 kB; lsn=0/3EC4710, redo lsn=0/3EC46D8
+2026-04-14 18:18:13.645 IST [27996] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:19:53.366 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 18:19:55.280 IST [26256] LOG:  checkpoint complete: wrote 16 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.631 s, sync=0.207 s, total=1.914 s; sync files=13, longest=0.027 s, average=0.016 s; distance=3 kB, estimate=4398 kB; lsn=0/3EC5338, redo lsn=0/3EC5300
+2026-04-14 18:24:40.299 IST [17784] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:29:53.304 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 18:29:54.396 IST [26256] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.876 s, sync=0.135 s, total=1.092 s; sync files=9, longest=0.019 s, average=0.015 s; distance=18 kB, estimate=3960 kB; lsn=0/3EC9BB8, redo lsn=0/3EC9B80
+2026-04-14 18:34:53.391 IST [26256] LOG:  checkpoint starting: time
+2026-04-14 18:34:54.423 IST [26256] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.878 s, sync=0.084 s, total=1.032 s; sync files=9, longest=0.018 s, average=0.010 s; distance=17 kB, estimate=3566 kB; lsn=0/3ECE110, redo lsn=0/3ECE0D8
+2026-04-14 18:36:09.662 IST [5816] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:36:09.662 IST [28904] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-04-14 18:36:15.793 IST [28520] LOG:  background worker "logical replication launcher" (PID 9128) was terminated by exception 0xC000013A
+2026-04-14 18:36:15.793 IST [28520] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-04-14 18:36:15.793 IST [28520] LOG:  terminating any other active server processes
+2026-04-14 18:36:15.813 IST [28520] LOG:  all server processes terminated; reinitializing
+^C

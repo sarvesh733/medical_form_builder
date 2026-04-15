@@ -49,6 +49,7 @@ export interface MedicalTemplate {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  persisted?: boolean;
 }
 
 export type TemplateStore = {
@@ -58,6 +59,8 @@ export type TemplateStore = {
   activeSectionId: string | null;
   darkMode: boolean;
   setTemplates: (templates: MedicalTemplate[]) => void;
+  loadTemplatesFromApi: () => Promise<void>;
+  saveActiveTemplateToApi: () => Promise<void>;
   setActiveTemplate: (id: string | null) => void;
   setDarkMode: (val: boolean) => void;
   updateTemplate: (template: MedicalTemplate) => void;
@@ -71,5 +74,6 @@ export type TemplateStore = {
   setSelectedField: (sectionId: string | null, fieldId: string | null) => void;
   formValues: Record<string, any>;
   setFieldValue: (id: string, value: any) => void;
+  setFormValues: (values: Record<string, any>) => void;
   clearFormValues: () => void;
 };

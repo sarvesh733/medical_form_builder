@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id    String        @id @default(uuid())
+  name       String
+  role       String
+  email      String        @unique
+  password_hash String?
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+  patients   Patient[]     @relation("PatientCreator")
+  templates  FormTemplate[]
+  events     ScanEvent[]
+  created_events ScanEvent[] @relation("ScanEventCreator")
+  edited_scan_history ScanEventHistory[] @relation("ScanEventHistoryEditor")
+}
+
+model Patient {
+  patient_id String       @id @default(uuid())
+  name       String
+  created_by String
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+  creator    User         @relation("PatientCreator", fields: [created_by], references: [user_id], onDelete: Restrict)
+  scan_events ScanEvent[]
+}
+
+model FormTemplate {
+  template_id String      @id @default(uuid())
+  doctor_id   String
+  scan_type   String
+  version     Int         @default(1)
+  title       String?
+  is_active   Boolean     @default(true)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  doctor      User        @relation(fields: [doctor_id], references: [user_id], onDelete: Cascade)
+  fields      FormField[]
+  events      ScanEvent[]
+
+  @@index([doctor_id, scan_type])
+}
+
+model FormField {
+  field_id     String       @id @default(uuid())
+  template_id  String
+  section_id   String
+  section_title String
+  field_name   String
+  standard_key String
+  field_type   String
+  is_required  Boolean      @default(false)
+  sort_order   Int          @default(0)
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+  template     FormTemplate @relation(fields: [template_id], references: [template_id], onDelete: Cascade)
+  values       ScanFieldValue[]
+
+  @@index([template_id])
+  @@index([template_id, section_id])
+}
+
+model ScanEvent {
+  event_id    String           @id @default(uuid())
+  patient_id  String
+  doctor_id   String
+  created_by  String?
+  template_id String
+  status      String           @default("draft")
+  notes       String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  patient     Patient          @relation(fields: [patient_id], references: [patient_id], onDelete: Cascade)
+  doctor      User             @relation(fields: [doctor_id], references: [user_id], onDelete: Restrict)
+  creator     User?            @relation("ScanEventCreator", fields: [created_by], references: [user_id], onDelete: SetNull)
+  template    FormTemplate     @relation(fields: [template_id], references: [template_id], onDelete: Restrict)
+  data        ScanEventData?
+  history     ScanEventHistory[]
+  values      ScanFieldValue[]
+
+  @@index([patient_id, created_at])
+  @@index([doctor_id, created_at])
+  @@index([template_id, created_at])
+}
+
+model ScanFieldValue {
+  value_id    String     @id @default(uuid())
+  event_id    String
+  field_id    String
+  value_text  String?
+  value_json  Json?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  event       ScanEvent  @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
+  field       FormField  @relation(fields: [field_id], references: [field_id], onDelete: Cascade)
+
+  @@unique([event_id, field_id])
+  @@index([field_id])
+}
+
+model ScanEventData {
+  event_data_id String    @id @default(uuid())
+  event_id      String    @unique
+  data          Json
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  event         ScanEvent @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
+
+  @@index([event_id])
+}
+
+model ScanEventHistory {
+  history_id   String    @id @default(uuid())
+  event_id     String
+  old_data     Json
+  new_data     Json
+  edited_by    String
+  edited_role  String
+  edited_at    DateTime  @default(now())
+  event        ScanEvent @relation(fields: [event_id], references: [event_id], onDelete: Cascade)
+  editor       User      @relation("ScanEventHistoryEditor", fields: [edited_by], references: [user_id], onDelete: Restrict)
+
+  @@index([event_id, edited_at])
+  @@index([edited_by])
+}
