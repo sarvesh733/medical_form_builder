@@ -10,7 +10,7 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import Navbar from './components/Navbar';
 import PrintLayout from './components/PrintLayout';
-import { fetchScanEvent, saveScanEventData } from './api/scanEvents';
+import { fetchScanEvent, fetchScanEventHistory, saveScanEventData, type ScanEventHistoryItem } from './api/scanEvents';
 
 const AppBuilder: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -23,6 +23,8 @@ const AppBuilder: React.FC = () => {
   } = useStore();
   const [isSavingReport, setIsSavingReport] = useState(false);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
+  const [historyRows, setHistoryRows] = useState<ScanEventHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   const eventId = searchParams.get('eventId');
   const templateIdFromUrl = searchParams.get('templateId');
@@ -65,6 +67,24 @@ const AppBuilder: React.FC = () => {
       });
   }, [eventId, setActiveTemplate, setFormValues]);
 
+  useEffect(() => {
+    if (!eventId) {
+      return;
+    }
+
+    setIsLoadingHistory(true);
+    fetchScanEventHistory(eventId)
+      .then((rows) => {
+        setHistoryRows(rows);
+      })
+      .catch((error) => {
+        console.error('Failed to load scan event history:', error);
+      })
+      .finally(() => {
+        setIsLoadingHistory(false);
+      });
+  }, [eventId]);
+
   const handleSaveReport = async () => {
     if (!eventId) {
       return;
@@ -75,6 +95,8 @@ const AppBuilder: React.FC = () => {
     try {
       await saveScanEventData(eventId, reportPayload);
       setReportStatus(`Saved report data for event ${eventId}`);
+      const rows = await fetchScanEventHistory(eventId);
+      setHistoryRows(rows);
     } catch (error) {
       console.error('Failed to save scan event data:', error);
       setReportStatus(error instanceof Error ? error.message : 'Failed to save report data');
@@ -96,7 +118,7 @@ const AppBuilder: React.FC = () => {
         <Navbar onTogglePreview={() => {}} isPreview={false} />
 
         {hasEventContext && (
-          <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-amber-50 dark:bg-amber-900/20 flex items-center justify-between gap-4">
+          <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-amber-50 dark:bg-amber-900/20 grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div>
               <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Scan Event Mode: {eventId}</p>
               <p className="text-xs text-amber-600 dark:text-amber-200">Fill form values and save report JSON for this event.</p>
@@ -109,6 +131,49 @@ const AppBuilder: React.FC = () => {
             >
               {isSavingReport ? 'Saving...' : 'Save Report Data'}
             </button>
+
+            <div className="md:col-span-2 rounded-lg border border-amber-300/40 bg-white/70 dark:bg-slate-900/40 px-3 py-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-200">Edit Audit Trail</p>
+                <button
+                  onClick={async () => {
+                    if (!eventId) return;
+                    setIsLoadingHistory(true);
+                    try {
+                      const rows = await fetchScanEventHistory(eventId);
+                      setHistoryRows(rows);
+                    } finally {
+                      setIsLoadingHistory(false);
+                    }
+                  }}
+                  className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-300"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {isLoadingHistory ? (
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">Loading history...</p>
+              ) : historyRows.length === 0 ? (
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">No edits recorded yet. First save creates current state, second save onwards creates history records.</p>
+              ) : (
+                <div className="mt-2 max-h-32 overflow-y-auto space-y-1 pr-1">
+                  {historyRows.slice(0, 10).map((row) => (
+                    <div key={row.history_id} className="text-[11px] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 rounded px-2 py-1 bg-white/60 dark:bg-slate-950/40">
+                      <div className="font-semibold">
+                        {row.editor?.name ?? row.edited_by} ({row.edited_role}) at {new Date(row.edited_at).toLocaleString()}
+                      </div>
+                      <div className="opacity-80">
+                        Old: {JSON.stringify(row.old_data)}
+                      </div>
+                      <div className="opacity-80">
+                        New: {JSON.stringify(row.new_data)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
         

@@ -123,7 +123,7 @@ router.post('/:id/data', async (req, res) => {
       await prisma.scanEventHistory.create({
         data: {
           event_id: id,
-          old_data: existing.data,
+          old_data: (existing.data ?? Prisma.JsonNull) as Prisma.InputJsonValue,
           new_data: payload,
           edited_by: editedBy,
           edited_role: editedRole,
