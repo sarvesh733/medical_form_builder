@@ -191,7 +191,7 @@ const PrintLayout: React.FC = () => {
                                 {/* Integrated Tables (Dynamic) */}
                                 {visibleFields.filter(f => f.type === 'dynamic-table').map(tableField => {
                                     const rows = (formValues[tableField.id] || []) as any[];
-                                    const headers = tableField.columns || [];
+                                    const headers = tableField.columns || ['Date', 'Fetus', 'G.Sac', 'CRL', 'BPD', 'HC', 'AC', 'FL'];
                                     return (
                                         <div key={tableField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 overflow-hidden break-inside-avoid shadow-sm">
                                             <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">

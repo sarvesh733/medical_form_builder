@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Mail, Lock, ChevronRight, Eye, EyeOff, ArrowLeft } from 'lucide-react';
@@ -6,8 +6,10 @@ import { USER_ROLES, UserRole, saveSession } from '../auth';
 import { loginUser } from '../api/auth';
 
 const Login: React.FC = () => {
+  const SAVED_EMAILS_KEY = 'medical_builder_saved_emails';
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [savedEmails, setSavedEmails] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,6 +19,22 @@ const Login: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_EMAILS_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setSavedEmails(parsed.filter((email) => typeof email === 'string'));
+      }
+    } catch {
+      // ignore malformed local storage values
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -55,6 +73,14 @@ const Login: React.FC = () => {
         password: formData.password,
         role: formData.role,
       });
+
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      if (normalizedEmail) {
+        const updatedEmails = [normalizedEmail, ...savedEmails.filter((email) => email !== normalizedEmail)].slice(0, 10);
+        localStorage.setItem(SAVED_EMAILS_KEY, JSON.stringify(updatedEmails));
+        setSavedEmails(updatedEmails);
+      }
+
       saveSession(session);
       navigate('/dashboard');
     } catch (error) {
@@ -128,7 +154,7 @@ const Login: React.FC = () => {
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-medium mb-2">Role</label>
               <select
@@ -155,9 +181,16 @@ const Login: React.FC = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  autoComplete="email"
+                  list="saved-email-options"
                   placeholder="john@example.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
                 />
+                <datalist id="saved-email-options">
+                  {savedEmails.map((email) => (
+                    <option key={email} value={email} />
+                  ))}
+                </datalist>
               </div>
               {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
             </motion.div>
@@ -171,6 +204,7 @@ const Login: React.FC = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
                 />

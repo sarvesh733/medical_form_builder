@@ -10,7 +10,11 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const Canvas: React.FC = () => {
+type CanvasProps = {
+  isLocked?: boolean;
+};
+
+const Canvas: React.FC<CanvasProps> = ({ isLocked = false }) => {
   const { activeTemplate, addSection, removeSection, updateTemplate, reorderSections, formValues, clearFormValues } = useStore();
 
   const isFieldVisible = (field: any) => {
@@ -81,34 +85,27 @@ const Canvas: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-col gap-3">
-             <div className="flex gap-2">
-               <button 
-                 onClick={() => {
-                   alert('Protocol Arrangement Saved Successfully!');
-                 }}
-                 className="flex-1 h-14 px-6 bg-medical-primary text-white dark:text-medical-dark rounded-[1.25rem] flex items-center justify-center gap-2 font-black text-xs tracking-[0.2em] shadow-neon-glow hover:scale-105 transition-all uppercase"
-               >
-                 <Database size={18} />
-                 SAVE
-               </button>
-               <button 
-                 onClick={clearFormValues}
-                 title="Reset All Inputs"
-                 className="w-14 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-500 hover:text-medical-primary border border-slate-200 dark:border-white/10 transition-all shadow-xl"
-               >
-                 <RotateCcw size={20} />
-               </button>
-             </div>
-             <div className="flex gap-3">
-               <button className="flex-1 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 transition-all shadow-2xl">
-                 <Settings2 size={24} />
-               </button>
-               <button className="flex-1 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-600 hover:text-rose-500 border border-slate-200 dark:border-white/5 shadow-xl transition-all">
-                 <Trash2 size={24} />
-               </button>
-             </div>
-          </div>
+          {!isLocked && (
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-end">
+                <button 
+                  onClick={clearFormValues}
+                  title="Reset All Inputs"
+                  className="w-14 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-500 hover:text-medical-primary border border-slate-200 dark:border-white/10 transition-all shadow-xl"
+                >
+                  <RotateCcw size={20} />
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <button className="flex-1 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-white/10 transition-all shadow-2xl">
+                  <Settings2 size={24} />
+                </button>
+                <button className="flex-1 h-14 glass glass-hover rounded-[1.25rem] flex items-center justify-center text-slate-600 hover:text-rose-500 border border-slate-200 dark:border-white/5 shadow-xl transition-all">
+                  <Trash2 size={24} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -116,7 +113,7 @@ const Canvas: React.FC = () => {
       <Reorder.Group 
         axis="y" 
         values={activeTemplate.sections} 
-        onReorder={reorderSections}
+        onReorder={isLocked ? () => {} : reorderSections}
         className="space-y-12"
       >
         {activeTemplate.sections.map((section, idx) => {
@@ -129,6 +126,7 @@ const Canvas: React.FC = () => {
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
+              dragListener={!isLocked}
               className={cn(
                 "group relative",
                 section.fields.length > 0 && section.fields.filter(isFieldVisible).length === 0 && "hidden"
@@ -136,20 +134,22 @@ const Canvas: React.FC = () => {
               onClick={() => useStore.getState().setActiveSection(section.id)}
             >
               {/* Section Controls */}
-              <div className="absolute -left-16 top-0 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
-                <div className="w-10 h-10 glass rounded-xl flex items-center justify-center text-slate-400 hover:text-medical-primary cursor-grab active:cursor-grabbing border border-slate-200 dark:border-white/5 shadow-xl transition-colors">
-                  <GripVertical size={20} />
+              {!isLocked && (
+                <div className="absolute -left-16 top-0 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                  <div className="w-10 h-10 glass rounded-xl flex items-center justify-center text-slate-400 hover:text-medical-primary cursor-grab active:cursor-grabbing border border-slate-200 dark:border-white/5 shadow-xl transition-colors">
+                    <GripVertical size={20} />
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSection(section.id);
+                    }}
+                    className="w-10 h-10 glass glass-hover rounded-xl flex items-center justify-center text-slate-600 hover:text-rose-500 border border-slate-200 dark:border-white/5 shadow-xl"
+                  >
+                    <Trash2 size={20} />
+                  </button>
                 </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeSection(section.id);
-                  }}
-                  className="w-10 h-10 glass glass-hover rounded-xl flex items-center justify-center text-slate-600 hover:text-rose-500 border border-slate-200 dark:border-white/5 shadow-xl"
-                >
-                  <Trash2 size={20} />
-                </button>
-              </div>
+              )}
 
               <div className={`glass rounded-[2rem] overflow-hidden border transition-all duration-500 shadow-2xl ${
                 isActive 
@@ -161,27 +161,35 @@ const Canvas: React.FC = () => {
                 }`}>
                    <div className="flex items-center gap-4 flex-1">
                       <div className="w-1 h-6 bg-medical-primary rounded-full shadow-neon-glow" />
-                      <input 
-                          type="text" 
-                          value={section.title}
-                          className="bg-transparent border-none outline-none text-lg font-black text-slate-900 dark:text-white w-full focus:text-medical-primary transition-colors tracking-tight uppercase"
-                          placeholder="Section Title..."
-                          onChange={(e) => {
-                            const updatedSections = activeTemplate.sections.map(s => 
-                              s.id === section.id ? { ...s, title: e.target.value } : s
-                            );
-                            updateTemplate({ ...activeTemplate, sections: updatedSections });
-                          }}
-                      />
+                      {isLocked ? (
+                        <span className="text-lg font-black text-slate-900 dark:text-white w-full tracking-tight uppercase">
+                          {section.title}
+                        </span>
+                      ) : (
+                        <input 
+                            type="text" 
+                            value={section.title}
+                            className="bg-transparent border-none outline-none text-lg font-black text-slate-900 dark:text-white w-full focus:text-medical-primary transition-colors tracking-tight uppercase"
+                            placeholder="Section Title..."
+                            onChange={(e) => {
+                              const updatedSections = activeTemplate.sections.map(s => 
+                                s.id === section.id ? { ...s, title: e.target.value } : s
+                              );
+                              updateTemplate({ ...activeTemplate, sections: updatedSections });
+                            }}
+                        />
+                      )}
                    </div>
                    <div className="flex items-center gap-6">
                       <div className="flex flex-col items-end">
                          <span className="text-[10px] font-black text-medical-primary uppercase tracking-[0.2em]">{section.fields.length} PARAMETERS</span>
                          <span className="text-[9px] font-mono text-slate-500 dark:text-slate-600 uppercase">SERIAL_ID: {section.id}</span>
                       </div>
-                      <button className="w-10 h-10 rounded-xl bg-medical-primary/10 flex items-center justify-center text-medical-primary hover:bg-medical-primary hover:text-white dark:hover:text-medical-dark transition-all border border-medical-primary/20">
-                        <Plus size={20} />
-                      </button>
+                      {!isLocked && (
+                        <button className="w-10 h-10 rounded-xl bg-medical-primary/10 flex items-center justify-center text-medical-primary hover:bg-medical-primary hover:text-white dark:hover:text-medical-dark transition-all border border-medical-primary/20">
+                          <Plus size={20} />
+                        </button>
+                      )}
                    </div>
                 </div>
 
@@ -246,17 +254,19 @@ const Canvas: React.FC = () => {
         })}
       </Reorder.Group>
 
-      <motion.button 
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        onClick={() => addSection({ id: Math.random().toString(36).substr(2, 9), title: 'New Structural Section', fields: [] })}
-        className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-slate-500 hover:border-medical-primary/30 hover:bg-medical-primary/5 hover:text-medical-primary transition-all group shadow-xl mt-12"
-      >
-        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-medical-primary/10 transition-colors">
-           <Plus size={24} />
-        </div>
-        <span className="text-xs font-black uppercase tracking-[0.4em]">Initialize New Section Wrapper</span>
-      </motion.button>
+      {!isLocked && (
+        <motion.button 
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => addSection({ id: Math.random().toString(36).substr(2, 9), title: 'New Structural Section', fields: [] })}
+          className="w-full py-10 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-slate-500 hover:border-medical-primary/30 hover:bg-medical-primary/5 hover:text-medical-primary transition-all group shadow-xl mt-12"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-medical-primary/10 transition-colors">
+             <Plus size={24} />
+          </div>
+          <span className="text-xs font-black uppercase tracking-[0.4em]">Initialize New Section Wrapper</span>
+        </motion.button>
+      )}
     </div>
   );
 };

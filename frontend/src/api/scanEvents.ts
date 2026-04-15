@@ -27,21 +27,28 @@ export type ScanEventDetail = {
   created_at: string;
   updated_at: string;
   data: ScanEventData | null;
-};
-
-export type ScanEventHistoryItem = {
-  history_id: string;
-  event_id: string;
-  old_data: Record<string, unknown>;
-  new_data: Record<string, unknown>;
-  edited_by: string;
-  edited_role: string;
-  edited_at: string;
-  editor?: {
-    user_id: string;
+  patient?: {
+    patient_id: string;
+    pid: string;
     name: string;
-    role: string;
+    phone: string;
+    address: string;
+    age: number;
+    dob: string;
+    marital_status: string;
+    gender: string;
+    state: string;
+    country: string;
+    aadhar_number: string;
     email: string;
+  };
+  template?: {
+    template_id: string;
+    fields?: Array<{
+      standard_key: string;
+      field_name?: string;
+      field_type?: string;
+    }>;
   };
 };
 
@@ -110,17 +117,4 @@ export const fetchScanEvent = async (eventId: string): Promise<ScanEventDetail> 
 
   await assertOk(res, 'Failed to fetch scan event');
   return (await res.json()) as ScanEventDetail;
-};
-
-export const fetchScanEventHistory = async (eventId: string): Promise<ScanEventHistoryItem[]> => {
-  const user = getCurrentUser();
-  const res = await fetch(`${API_BASE_URL}/scan-events/${eventId}/history`, {
-    headers: {
-      ...getAuthHeaders(),
-      ...(user?.role ? { 'x-user-role': user.role } : {}),
-    },
-  });
-
-  await assertOk(res, 'Failed to fetch scan event history');
-  return (await res.json()) as ScanEventHistoryItem[];
 };

@@ -47,6 +47,23 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Template not found' });
     }
 
+    const existingEvent = await prisma.scanEvent.findFirst({
+      where: {
+        patient_id,
+        template_id,
+      },
+      orderBy: {
+        updated_at: 'desc',
+      },
+    });
+
+    if (existingEvent) {
+      return res.status(200).json({
+        ...existingEvent,
+        reused: true,
+      });
+    }
+
     const event = await prisma.scanEvent.create({
       data: {
         patient_id,
@@ -57,7 +74,10 @@ router.post('/', async (req, res) => {
       },
     });
 
-    return res.status(201).json(event);
+    return res.status(201).json({
+      ...event,
+      reused: false,
+    });
   } catch (error) {
     console.error('Failed to create scan event:', error);
     return res.status(500).json({ message: 'Failed to create scan event' });
@@ -75,10 +95,8 @@ router.post('/:id/data', async (req, res) => {
 
     const { id } = req.params;
     const { data } = req.body as { data?: Record<string, unknown> };
-    const editedBy = requestUser.userId;
-    const editedRole = requestUser.role;
 
-    if (!data || typeof data !== 'object' || Array.isArray(data) || !editedBy || !editedRole) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
       return res.status(400).json({ message: 'data object is required' });
     }
 
@@ -90,6 +108,7 @@ router.post('/:id/data', async (req, res) => {
             fields: {
               select: {
                 standard_key: true,
+                field_type: true,
               },
             },
           },
@@ -102,7 +121,12 @@ router.post('/:id/data', async (req, res) => {
     }
 
     const allowedKeys = new Set(event.template.fields.map((field) => field.standard_key));
-    const invalidKeys = Object.keys(data).filter((key) => !allowedKeys.has(key));
+    const matrixRoots = event.template.fields
+      .filter((field) => ['doppler-matrix', 'biometry-matrix'].includes(field.field_type))
+      .map((field) => field.standard_key);
+
+    const isAllowedDerivedKey = (key: string) => matrixRoots.some((root) => key.startsWith(`${root}_`));
+    const invalidKeys = Object.keys(data).filter((key) => !allowedKeys.has(key) && !isAllowedDerivedKey(key));
 
     if (invalidKeys.length > 0) {
       return res.status(400).json({
@@ -112,24 +136,6 @@ router.post('/:id/data', async (req, res) => {
     }
 
     const payload = data as Prisma.InputJsonValue;
-    const existing = await prisma.scanEventData.findUnique({
-      where: { event_id: id },
-      select: {
-        data: true,
-      },
-    });
-
-    if (existing) {
-      await prisma.scanEventHistory.create({
-        data: {
-          event_id: id,
-          old_data: (existing.data ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-          new_data: payload,
-          edited_by: editedBy,
-          edited_role: editedRole,
-        },
-      });
-    }
 
     await prisma.scanEventData.upsert({
       where: { event_id: id },
@@ -145,42 +151,10 @@ router.post('/:id/data', async (req, res) => {
       data: { status: 'draft' },
     });
 
-    return res.json({ message: 'Saved with history' });
+    return res.json({ message: 'Saved' });
   } catch (error) {
     console.error('Failed to save scan event data:', error);
     return res.status(500).json({ message: 'Failed to save scan event data' });
-  }
-});
-
-router.get('/:id/history', async (req, res) => {
-  try {
-    const requestUser = getRequestUser(req);
-    if (!hasAllowedRole(requestUser.role, ['doctor', 'typist', 'admin'])) {
-      return res.status(403).json({
-        message: 'Only doctor, typist, or admin can view scan event history',
-      });
-    }
-
-    const { id } = req.params;
-    const history = await prisma.scanEventHistory.findMany({
-      where: { event_id: id },
-      orderBy: { edited_at: 'desc' },
-      include: {
-        editor: {
-          select: {
-            user_id: true,
-            name: true,
-            role: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    return res.json(history);
-  } catch (error) {
-    console.error('Failed to fetch scan event history:', error);
-    return res.status(500).json({ message: 'Failed to fetch scan event history' });
   }
 });
 

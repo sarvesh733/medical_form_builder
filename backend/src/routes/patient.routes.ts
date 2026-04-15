@@ -6,7 +6,37 @@ const router = Router();
 
 router.post('/', async (req, res) => {
   try {
-    const { name, created_by } = req.body as { name?: string; created_by?: string };
+    const {
+      pid,
+      name,
+      phone,
+      address,
+      age,
+      dob,
+      marital_status,
+      martial_status,
+      gender,
+      state,
+      country,
+      aadhar_number,
+      email,
+      created_by,
+    } = req.body as {
+      pid?: string;
+      name?: string;
+      phone?: string;
+      address?: string;
+      age?: number | string;
+      dob?: string;
+      marital_status?: string;
+      martial_status?: string;
+      gender?: string;
+      state?: string;
+      country?: string;
+      aadhar_number?: string;
+      email?: string;
+      created_by?: string;
+    };
     const requestUser = getRequestUser(req);
 
     if (!hasAllowedRole(requestUser.role, ['receptionist', 'admin'])) {
@@ -16,31 +46,72 @@ router.post('/', async (req, res) => {
     }
 
     const creatorId = requestUser.userId || created_by;
+    const maritalStatus = marital_status ?? martial_status;
+    const parsedAge = typeof age === 'string' ? Number(age) : age;
+    const parsedDob = dob ? new Date(dob) : null;
+    const requiredFields = [
+      pid,
+      name,
+      phone,
+      address,
+      maritalStatus,
+      gender,
+      state,
+      country,
+      aadhar_number,
+      email,
+      creatorId,
+    ];
 
-    if (!name || !creatorId) {
+    if (requiredFields.some((value) => !value) || !parsedAge || Number.isNaN(parsedAge) || !parsedDob || Number.isNaN(parsedDob.getTime())) {
       return res.status(400).json({
-        message: 'name and user context are required',
+        message: 'pid, name, phone, address, age, dob, marital_status, gender, state, country, aadhar_number, email and user context are required',
       });
     }
 
+    const creatorUserId = creatorId as string;
+    const patientPid = pid as string;
+    const patientName = name as string;
+    const patientPhone = phone as string;
+    const patientAddress = address as string;
+    const patientAge = parsedAge as number;
+    const patientDob = parsedDob as Date;
+    const patientMaritalStatus = maritalStatus as string;
+    const patientGender = gender as string;
+    const patientState = state as string;
+    const patientCountry = country as string;
+    const patientAadhar = aadhar_number as string;
+    const patientEmail = email as string;
+
     // Ensure the creator account exists in the local environment.
     await prisma.user.upsert({
-      where: { user_id: creatorId },
+      where: { user_id: creatorUserId },
       update: {
         role: requestUser.role,
       },
       create: {
-        user_id: creatorId,
-        name: `${requestUser.role} ${creatorId}`,
+        user_id: creatorUserId,
+        name: `${requestUser.role} ${creatorUserId}`,
         role: requestUser.role,
-        email: `${creatorId.toLowerCase()}@local.dev`,
+        email: `${creatorUserId.toLowerCase()}@local.dev`,
       },
     });
 
     const patient = await prisma.patient.create({
       data: {
-        name,
-        created_by: creatorId,
+        pid: patientPid,
+        name: patientName,
+        phone: patientPhone,
+        address: patientAddress,
+        age: patientAge,
+        dob: patientDob,
+        marital_status: patientMaritalStatus,
+        gender: patientGender,
+        state: patientState,
+        country: patientCountry,
+        aadhar_number: patientAadhar,
+        email: patientEmail,
+        created_by: creatorUserId,
       },
     });
 

@@ -2,16 +2,42 @@ import { getAuthHeaders, getCurrentUser } from '../auth';
 
 export type Patient = {
   patient_id: string;
+  pid: string;
   name: string;
+  phone: string;
+  address: string;
+  age: number;
+  dob: string;
+  marital_status: string;
+  gender: string;
+  state: string;
+  country: string;
+  aadhar_number: string;
+  email: string;
   created_by: string;
   created_at: string;
   updated_at: string;
 };
 
+export type CreatePatientPayload = {
+  pid: string;
+  name: string;
+  phone: string;
+  address: string;
+  age: number;
+  dob: string;
+  marital_status: string;
+  gender: string;
+  state: string;
+  country: string;
+  aadhar_number: string;
+  email: string;
+};
+
 const API_BASE_URL = 'http://localhost:5000';
 const DEFAULT_CREATOR_ID = 'SYSTEM';
 
-export const createPatient = async (name: string, createdBy?: string): Promise<Patient> => {
+export const createPatient = async (payload: CreatePatientPayload, createdBy?: string): Promise<Patient> => {
   const user = getCurrentUser();
   const creatorId = createdBy ?? user?.user_id ?? DEFAULT_CREATOR_ID;
 
@@ -22,7 +48,7 @@ export const createPatient = async (name: string, createdBy?: string): Promise<P
       ...getAuthHeaders(),
     },
     body: JSON.stringify({
-      name,
+      ...payload,
       created_by: creatorId,
       user_id: creatorId,
       role: user?.role,

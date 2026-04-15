@@ -10,12 +10,13 @@ import { getCurrentUser } from '../auth';
 interface NavbarProps {
   onTogglePreview: () => void;
   isPreview: boolean;
+  lockTemplateEditing?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview }) => {
+const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview, lockTemplateEditing = false }) => {
   const user = getCurrentUser();
   const canSaveTemplate = user?.role === 'doctor' || user?.role === 'admin';
-  const canCreatePatient = user?.role === 'admin';
+  const canCreatePatient = false;
   const { setActiveTemplate, activeTemplate, saveActiveTemplateToApi, templates } = useStore();
   const savedTemplates = templates.filter((template) => template.persisted);
   const [showSavedModal, setShowSavedModal] = useState(false);
@@ -40,7 +41,21 @@ const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview }) => {
     }
 
     try {
-      const created = await createPatient(patientName.trim());
+      const now = Date.now();
+      const created = await createPatient({
+        pid: `PID-${now}`,
+        name: patientName.trim(),
+        phone: 'NA',
+        address: 'NA',
+        age: 0,
+        dob: new Date().toISOString(),
+        marital_status: 'unknown',
+        gender: 'unknown',
+        state: 'unknown',
+        country: 'unknown',
+        aadhar_number: `TEMP-${now}`,
+        email: `temp-${now}@local.dev`,
+      });
       setPatientName('');
       setPatientList((prev) => [created, ...prev]);
       alert('Patient created successfully.');
@@ -93,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview }) => {
         
         <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-4" />
 
-        {canSaveTemplate && (
+        {canSaveTemplate && !lockTemplateEditing && (
           <button 
             onClick={async () => {
               if (!activeTemplate) {
@@ -131,9 +146,11 @@ const Navbar: React.FC<NavbarProps> = ({ onTogglePreview, isPreview }) => {
           </button>
         )}
 
-        <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-medical-primary to-medical-secondary rounded-xl text-xs font-black text-slate-900 dark:text-medical-dark hover:shadow-neon-glow hover:scale-105 transition-all uppercase tracking-tighter shadow-lg shadow-medical-primary/20 leading-none">
-          <Database size={16} /> DEPLOY_SCHEMA
-        </button>
+        {!lockTemplateEditing && (
+          <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-medical-primary to-medical-secondary rounded-xl text-xs font-black text-slate-900 dark:text-medical-dark hover:shadow-neon-glow hover:scale-105 transition-all uppercase tracking-tighter shadow-lg shadow-medical-primary/20 leading-none">
+            <Database size={16} /> DEPLOY_SCHEMA
+          </button>
+        )}
 
         <div className="h-4 w-px bg-white/10 mx-4" />
         
