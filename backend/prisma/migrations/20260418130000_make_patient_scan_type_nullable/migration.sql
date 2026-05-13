@@ -1,0 +1,2 @@
+ALTER TABLE "Patient"
+ALTER COLUMN "scan_type" DROP NOT NULL;

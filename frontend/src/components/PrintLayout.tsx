@@ -1,13 +1,60 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '../store';
 import { Activity } from 'lucide-react';
+import { getCurrentUser } from '../auth';
 
 const PrintLayout: React.FC = () => {
     const { activeTemplate, formValues } = useStore();
+    const currentUser = getCurrentUser();
+    
+    // Debug: log all formValues keys to see what data is available
+    useEffect(() => {
+        const dopperValues = Object.keys(formValues).filter(k => k.includes('dop_matrix'));
+        if (dopperValues.length > 0) {
+            console.log('[PrintLayout] Found doppler values:', dopperValues);
+            dopperValues.forEach(k => console.log(`  ${k}: ${formValues[k]}`));
+        }
+    }, [formValues]);
 
-    const isFieldVisible = (field: any) => {
-        if (!field.conditional) return true;
-        const { fieldId, operator, value } = field.conditional;
+    const signerName = (() => {
+        if (!currentUser?.name) {
+            return 'Authorized User';
+        }
+
+        if (currentUser.role === 'doctor' && !/^dr\.?\s/i.test(currentUser.name)) {
+            return `Dr. ${currentUser.name}`;
+        }
+
+        return currentUser.name;
+    })();
+
+    const signerDesignation = (() => {
+        if (!currentUser?.role) {
+            return 'Medical Report Signatory';
+        }
+
+        if (currentUser.role === 'doctor') {
+            return 'Consultant Radiologist';
+        }
+
+        if (currentUser.role === 'typist') {
+            return 'Reporting Typist';
+        }
+
+        if (currentUser.role === 'receptionist') {
+            return 'Reception Desk';
+        }
+
+        if (currentUser.role === 'admin') {
+            return 'System Administrator';
+        }
+
+        return 'Medical Report Signatory';
+    })();
+
+    const isConditionalVisible = (conditional: any) => {
+        if (!conditional) return true;
+        const { fieldId, operator, value } = conditional;
         const targetValue = formValues[fieldId];
 
         if (operator === 'equals') return String(targetValue) === String(value);
@@ -23,6 +70,10 @@ const PrintLayout: React.FC = () => {
         return true;
     };
 
+    const isFieldVisible = (field: any) => isConditionalVisible(field.conditional);
+    
+    const isSectionVisible = (section: any) => isConditionalVisible(section.conditional);
+
     const formatDate = (dateStr: string) => {
         if (!dateStr || !dateStr.includes('-')) return dateStr;
         const parts = dateStr.split('-');
@@ -35,7 +86,7 @@ const PrintLayout: React.FC = () => {
     if (!activeTemplate) return null;
 
     return (
-        <div id="print-area" className="hidden print:block print:bg-white min-h-screen">
+        <div id="print-area" className="hidden print:block print:bg-white">
             <div className="w-full max-w-[210mm] mx-auto bg-white relative">
                 {/* Header Decor */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-medical-primary via-medical-secondary to-medical-accent" />
@@ -61,15 +112,20 @@ const PrintLayout: React.FC = () => {
 
                 <div className="h-px w-full bg-slate-100 mb-10" />
 
-                <div className="space-y-8">
+                <div className="space-y-5">
                     {activeTemplate.sections.map((section) => {
+                        // Check if section itself is hidden by conditional logic
+                        if (!isSectionVisible(section)) {
+                            return null;
+                        }
+
                         const visibleFields = section.fields.filter(isFieldVisible);
                         if (visibleFields.length === 0) return null;
 
                         return (
-                            <div key={section.id} className="break-inside-avoid">
+                            <div key={section.id}>
                                 {/* Professional Section Header */}
-                                <div className="border-t-2 border-slate-950 pt-2 mb-2 flex items-center justify-between">
+                                <div className="border-t-2 border-slate-950 pt-2 mb-1 flex items-center justify-between">
                                     <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-900">{section.title}</h3>
                                     <div className="text-[9px] font-mono text-slate-400">REF_{section.id.substring(0, 4).toUpperCase()}</div>
                                 </div>
@@ -145,14 +201,14 @@ const PrintLayout: React.FC = () => {
                                                     }
                                                     return acc;
                                                 }, [] as any[]).map((row: any, rIdx: number) => (
-                                                    <tr key={rIdx} className={rIdx % 2 !== 0 ? 'bg-slate-50/20' : ''}>
-                                                        <td className="px-4 py-2 bg-slate-50/80 border-r border-slate-200 text-[9px] font-black text-slate-600 uppercase tracking-tight">
+                                                    <tr key={rIdx} className={rIdx % 2 !== 0 ? 'bg-slate-50/10' : ''}>
+                                                        <td className="px-3 py-1 bg-slate-50/60 border-r border-slate-200 text-[9px] font-black text-slate-600 uppercase tracking-tight">
                                                             {row.label}
                                                         </td>
-                                                        <td className="px-4 py-2 border-r border-slate-200 text-[10px] font-bold text-slate-950 break-words whitespace-pre-wrap leading-tight">
+                                                        <td className="px-3 py-1 border-r border-slate-200 text-[10px] font-bold text-slate-950 break-words whitespace-pre-wrap leading-tight">
                                                             {row.bValue || '---'}
                                                         </td>
-                                                        <td className="px-4 py-2 text-[10px] font-bold text-slate-950 break-words whitespace-pre-wrap leading-tight">
+                                                        <td className="px-3 py-1 text-[10px] font-bold text-slate-950 break-words whitespace-pre-wrap leading-tight">
                                                             {row.cValue || '---'}
                                                         </td>
                                                     </tr>
@@ -162,29 +218,40 @@ const PrintLayout: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="border-[1.5px] border-slate-200 divide-y divide-slate-200">
-                                        {visibleFields.map((field) => {
-                                            const value = formValues[field.id];
-                                            if (['dynamic-table', 'grid-matrix', 'doppler-matrix', 'biometry-matrix'].includes(field.type)) return null;
-
-                                            let displayValue = Array.isArray(value)
-                                                ? value.length > 0 ? value.join(', ') : '---'
-                                                : value || '---';
-
-                                            if (field.type === 'date' && value) {
-                                                displayValue = formatDate(String(value));
+                                        {(() => {
+                                            // Group fields in rows of 2 (like builder UI)
+                                            const fieldRows = [];
+                                            const stdFields = visibleFields.filter(f => !['dynamic-table', 'grid-matrix', 'doppler-matrix', 'biometry-matrix', 'early-pregnancy-matrix', 'nab-matrix'].includes(f.type));
+                                            for (let i = 0; i < stdFields.length; i += 2) {
+                                                fieldRows.push(stdFields.slice(i, i + 2));
                                             }
-
-                                            return (
-                                                <div key={field.id} className="flex min-h-[28px] divide-x divide-slate-200">
-                                                    <div className="w-[35%] bg-slate-50/80 px-4 py-2 flex items-center shrink-0">
-                                                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{field.label || 'Note'}</label>
-                                                    </div>
-                                                    <div className="flex-1 px-4 py-2 text-[11px] font-bold text-slate-950 break-all whitespace-pre-wrap flex items-center leading-relaxed">
-                                                        {displayValue}
-                                                    </div>
+                                            return fieldRows.map((row, idx) => (
+                                                <div key={idx} className="flex min-h-[22px] divide-x divide-slate-200">
+                                                    {row.map((field, colIdx) => {
+                                                        const value = formValues[field.id];
+                                                        let displayValue = Array.isArray(value)
+                                                            ? value.length > 0 ? value.join(', ') : '---'
+                                                            : value || '---';
+                                                        if (field.type === 'date' && value) {
+                                                            displayValue = formatDate(String(value));
+                                                        }
+                                                        return (
+                                                            <React.Fragment key={field.id}>
+                                                                <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0">
+                                                                    <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{field.label || 'Note'}</label>
+                                                                </div>
+                                                                <div className="flex-1 px-3 py-1 text-[10.5px] font-bold text-slate-950 break-all whitespace-pre-wrap flex items-center leading-tight">
+                                                                    {displayValue}
+                                                                </div>
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                    {/* If odd number of fields, fill last cell for alignment */}
+                                                    {row.length === 1 && <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0" />}
+                                                    {row.length === 1 && <div className="flex-1 px-3 py-1" />}
                                                 </div>
-                                            );
-                                        })}
+                                            ));
+                                        })()}
                                     </div>
                                 )}
 
@@ -193,7 +260,7 @@ const PrintLayout: React.FC = () => {
                                     const rows = (formValues[tableField.id] || []) as any[];
                                     const headers = tableField.columns || ['Date', 'Fetus', 'G.Sac', 'CRL', 'BPD', 'HC', 'AC', 'FL'];
                                     return (
-                                        <div key={tableField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 overflow-hidden break-inside-avoid shadow-sm">
+                                        <div key={tableField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 overflow-hidden shadow-sm">
                                             <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
                                                 <thead>
                                                     <tr className="bg-slate-100">
@@ -238,7 +305,7 @@ const PrintLayout: React.FC = () => {
                                     const headers = gridField.columns || ['Header 1', 'Header 2'];
                                     const rows = (formValues[gridField.id] || []) as any[];
                                     return (
-                                        <div key={gridField.id} className="mt-4 break-inside-avoid mb-6">
+                                        <div key={gridField.id} className="mt-4 mb-6">
                                             <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-2 px-1">
                                                 {gridField.label || 'Grid Matrix'}
                                             </div>
@@ -282,13 +349,111 @@ const PrintLayout: React.FC = () => {
                                 {/* Biometry Matrix Printer */}
                                 {visibleFields.filter(f => f.type === 'biometry-matrix').map(bioField => {
                                     const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
-                                    const variables = bioField.variables || [];
+                                    const variables = bioField.variables || ['BPD (cm)', 'OFD (cm)', 'HC (cm)', 'AC (cm)', 'TBD 1', 'TBD 2', 'TCD', 'Foot', 'Heart', 'FM'];
+
+                                    if (fetusQty === 1) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < variables.length; i += 2) {
+                                            paramRows.push(variables.slice(i, i + 2));
+                                        }
+                                        return (
+                                            <div key={bioField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 divide-y divide-slate-200">
+                                                {paramRows.map((row, idx) => (
+                                                    <div key={idx} className="flex min-h-[22px] divide-x divide-slate-200">
+                                                        {row.map((v) => {
+                                                            const cellId = `${bioField.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f0`;
+                                                            const value = formValues[cellId] || '---';
+                                                            return (
+                                                                <React.Fragment key={v}>
+                                                                    <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0">
+                                                                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{v}</label>
+                                                                    </div>
+                                                                    <div className="flex-1 px-3 py-1 text-[10.5px] font-bold text-slate-950 break-all whitespace-pre-wrap flex items-center leading-tight">
+                                                                        {value}
+                                                                    </div>
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                        {row.length === 1 && <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0" />}
+                                                        {row.length === 1 && <div className="flex-1 px-3 py-1" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+
+                                    if (fetusQty === 2 || fetusQty === 3) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < variables.length; i += 2) {
+                                            paramRows.push(variables.slice(i, i + 2));
+                                        }
+                                        
+                                        const paramWidth = fetusQty === 2 ? 'w-[26%]' : 'w-[20%]';
+                                        const fetusWidth = fetusQty === 2 ? 'w-[12%]' : 'w-[10%]';
+
+                                        return (
+                                            <div key={bioField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                                <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                    <thead>
+                                                        <tr className="bg-slate-900 text-white">
+                                                            {/* Left half headers */}
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700`}>Growth Parameters</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`l-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center border-r border-slate-700`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                            {/* Right half headers */}
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700 border-l-[1.5px] border-l-slate-950`}>Growth Parameters</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`r-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center ${i < fetusQty - 1 ? 'border-r border-slate-700' : ''}`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-200">
+                                                        {paramRows.map((row, idx) => (
+                                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                                {row.map((v, colIdx) => {
+                                                                    const isRight = colIdx === 1;
+                                                                    const borderClasses = isRight ? 'border-l-[1.5px] border-l-slate-950' : '';
+                                                                    return (
+                                                                        <React.Fragment key={v}>
+                                                                            <td className={`px-2 py-1 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200 ${borderClasses}`}>{v}</td>
+                                                                            {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                                const cellId = `${bioField.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}`;
+                                                                                const isLastInHalf = i === fetusQty - 1;
+                                                                                const cellBorder = isRight && isLastInHalf ? '' : 'border-r border-slate-100';
+                                                                                return (
+                                                                                    <td key={i} className={`px-1 py-1 text-[9.5px] font-bold text-slate-950 text-center ${cellBorder}`}>
+                                                                                        {formValues[cellId] || '---'}
+                                                                                    </td>
+                                                                                );
+                                                                            })}
+                                                                        </React.Fragment>
+                                                                    );
+                                                                })}
+                                                                {row.length === 1 && (
+                                                                    <React.Fragment>
+                                                                        <td className="px-2 py-1 bg-slate-50 border-r border-slate-200 border-l-[1.5px] border-l-slate-950"></td>
+                                                                        {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                            const isLastInHalf = i === fetusQty - 1;
+                                                                            const cellBorder = isLastInHalf ? '' : 'border-r border-slate-100';
+                                                                            return <td key={`empty-${i}`} className={`px-1 py-1 ${cellBorder}`}></td>;
+                                                                        })}
+                                                                    </React.Fragment>
+                                                                )}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        );
+                                    }
+
                                     return (
-                                        <div key={bioField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden break-inside-avoid shadow-sm">
-                                            <table className="w-full text-left border-collapse divide-y divide-slate-200">
+                                        <div key={bioField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                            <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
                                                 <thead>
                                                     <tr className="bg-slate-900 text-white">
-                                                        <th className="px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Growth Parameters</th>
+                                                        <th className="w-[35%] px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Growth Parameters</th>
                                                         {Array.from({ length: fetusQty }).map((_, i) => (
                                                             <th key={i} className="px-3 py-2 text-[8px] font-black uppercase tracking-widest text-center border-r border-slate-700 last:border-r-0">FETUS {String.fromCharCode(65 + i)}</th>
                                                         ))}
@@ -314,13 +479,161 @@ const PrintLayout: React.FC = () => {
                                     );
                                 })}
 
+                                {/* Early Pregnancy Matrix Printer */}
+                                {visibleFields.filter(f => f.type === 'early-pregnancy-matrix').map(epField => {
+                                    const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
+                                    const params = [
+                                        { id: 'gs', label: 'Gestational Sac' },
+                                        { id: 'ys', label: 'Yolk Sac' },
+                                        { id: 'crl', label: 'CRL' },
+                                        { id: 'hr', label: 'Heart Rate' },
+                                        { id: 'lt_ov', label: 'Lt. Ovary' },
+                                        { id: 'rt_ov', label: 'Rt. Ovary' }
+                                    ];
+
+                                    if (fetusQty === 1) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < params.length; i += 2) {
+                                            paramRows.push(params.slice(i, i + 2));
+                                        }
+                                        return (
+                                            <div key={epField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 divide-y divide-slate-200">
+                                                {paramRows.map((row, idx) => (
+                                                    <div key={idx} className="flex min-h-[22px] divide-x divide-slate-200">
+                                                        {row.map((p) => {
+                                                            const cellId = `${p.id}_f0`;
+                                                            const value = formValues[cellId] || '---';
+                                                            return (
+                                                                <React.Fragment key={p.id}>
+                                                                    <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0">
+                                                                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{p.label}</label>
+                                                                    </div>
+                                                                    <div className="flex-1 px-3 py-1 text-[10.5px] font-bold text-slate-950 break-all whitespace-pre-wrap flex items-center leading-tight">
+                                                                        {value}
+                                                                    </div>
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                        {row.length === 1 && <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0" />}
+                                                        {row.length === 1 && <div className="flex-1 px-3 py-1" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+
+                                    if (fetusQty === 2 || fetusQty === 3) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < params.length; i += 2) {
+                                            paramRows.push(params.slice(i, i + 2));
+                                        }
+                                        
+                                        const paramWidth = fetusQty === 2 ? 'w-[26%]' : 'w-[20%]';
+                                        const fetusWidth = fetusQty === 2 ? 'w-[12%]' : 'w-[10%]';
+
+                                        return (
+                                            <div key={epField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                                <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                    <thead>
+                                                        <tr className="bg-slate-900 text-white">
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700`}>Fetal Assessment</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`l-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center border-r border-slate-700`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700 border-l-[1.5px] border-l-slate-950`}>Fetal Assessment</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`r-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center ${i < fetusQty - 1 ? 'border-r border-slate-700' : ''}`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-200">
+                                                        {paramRows.map((row, idx) => (
+                                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                                {row.map((p, colIdx) => {
+                                                                    const isRight = colIdx === 1;
+                                                                    const borderClasses = isRight ? 'border-l-[1.5px] border-l-slate-950' : '';
+                                                                    return (
+                                                                        <React.Fragment key={p.id}>
+                                                                            <td className={`px-2 py-1 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200 ${borderClasses}`}>{p.label}</td>
+                                                                            {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                                const cellId = `${p.id}_f${i}`;
+                                                                                const isLastInHalf = i === fetusQty - 1;
+                                                                                const cellBorder = isRight && isLastInHalf ? '' : 'border-r border-slate-100';
+                                                                                return (
+                                                                                    <td key={i} className={`px-1 py-1 text-[9.5px] font-bold text-slate-950 text-center ${cellBorder}`}>
+                                                                                        {formValues[cellId] || '---'}
+                                                                                    </td>
+                                                                                );
+                                                                            })}
+                                                                        </React.Fragment>
+                                                                    );
+                                                                })}
+                                                                {row.length === 1 && (
+                                                                    <React.Fragment>
+                                                                        <td className="px-2 py-1 bg-slate-50 border-r border-slate-200 border-l-[1.5px] border-l-slate-950"></td>
+                                                                        {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                            const isLastInHalf = i === fetusQty - 1;
+                                                                            const cellBorder = isLastInHalf ? '' : 'border-r border-slate-100';
+                                                                            return <td key={`empty-${i}`} className={`px-1 py-1 ${cellBorder}`}></td>;
+                                                                        })}
+                                                                    </React.Fragment>
+                                                                )}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div key={epField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                            <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr className="bg-slate-900 text-white">
+                                                        <th className="w-[35%] px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Fetal Assessment</th>
+                                                        {Array.from({ length: fetusQty }).map((_, i) => (
+                                                            <th key={i} className="px-3 py-2 text-[8px] font-black uppercase tracking-widest text-center border-r border-slate-700 last:border-r-0">FETUS {String.fromCharCode(65 + i)}</th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-200">
+                                                    {params.map((p, pIdx) => (
+                                                        <tr key={p.id} className={pIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                            <td className="px-3 py-1.5 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200">{p.label}</td>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                const cellId = `${p.id}_f${i}`;
+                                                                return (
+                                                                    <td key={i} className="px-3 py-1.5 text-[10px] font-bold text-slate-950 text-center border-r border-slate-100 last:border-r-0">
+                                                                        {formValues[cellId] || '---'}
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })}
+
                                 {/* Doppler Matrix Printer */}
                                 {visibleFields.filter(f => f.type === 'doppler-matrix').map(dopField => {
                                     const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
-                                    const vessels = dopField.vessels || [];
+                                    const vessels = dopField.vessels || ['Rt. Uterine', 'Lt. Uterine', 'Umbilical', 'MCA', 'DV'];
                                     const metrics = ['Syst', 'Diast', 'R.I.'];
+                                    
+                                    // Debug: log to see if data exists
+                                    console.log('[PrintLayout] Doppler Matrix:', {
+                                      fieldId: dopField.id,
+                                      vessels,
+                                      fetusQty,
+                                      sampleCellId: `${dopField.id}_rtuterine_f0_syst`,
+                                      sampleValue: formValues[`${dopField.id}_rtuterine_f0_syst`]
+                                    });
+                                    
                                     return (
-                                        <div key={dopField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden break-inside-avoid">
+                                        <div key={dopField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden">
                                             <table className="w-full text-left border-collapse divide-y divide-slate-200">
                                                 <thead>
                                                     <tr className="bg-slate-950 text-white">
@@ -362,6 +675,137 @@ const PrintLayout: React.FC = () => {
                                         </div>
                                     );
                                 })}
+
+                                {/* NAB Matrix Printer */}
+                                {visibleFields.filter(f => f.type === 'nab-matrix').map(nabField => {
+                                    const fetusQty = Math.max(1, parseInt(String(formValues['ep_fetus_qty'] || '1')));
+                                    const rows: string[] = Array.isArray(nabField.rows) ? nabField.rows as string[] : ['LV', '4 Chamber / OT', 'Spine', 'Face', 'Ear', 'Stomach', 'Kidneys', 'Bladder', 'Limb Survey', 'Small Bowel', 'Large Bowel', 'PAMC'];
+
+                                    const getNabValue = (param: string, fetusIdx: number) => {
+                                        const cellId = `${nabField.id}_${param.replace(/[^a-z0-9]/gi, '').toLowerCase()}_f${fetusIdx}`;
+                                        return formValues[cellId] || 'N';
+                                    };
+
+                                    // Single-fetus: 2-column key-value split layout
+                                    if (fetusQty === 1) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < rows.length; i += 2) paramRows.push(rows.slice(i, i + 2));
+                                        return (
+                                            <div key={nabField.id} className="mt-[-1.5px] border-[1.5px] border-slate-200 divide-y divide-slate-200">
+                                                {paramRows.map((row, idx) => (
+                                                    <div key={idx} className="flex min-h-[22px] divide-x divide-slate-200">
+                                                        {row.map((param) => {
+                                                            const val = getNabValue(param, 0);
+                                                            const isAB = val === 'AB';
+                                                            return (
+                                                                <React.Fragment key={param}>
+                                                                    <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0">
+                                                                        <label className="text-[9px] font-black text-slate-600 uppercase tracking-tight leading-none">{param}</label>
+                                                                    </div>
+                                                                    <div className={`flex-1 px-2 py-1 flex items-center justify-center leading-tight`}>
+                                                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded ${isAB ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{val}</span>
+                                                                    </div>
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                        {row.length === 1 && <div className="w-[35%] bg-slate-50/60 px-3 py-1 flex items-center shrink-0" />}
+                                                        {row.length === 1 && <div className="flex-1 px-3 py-1" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+
+                                    // 2–3 fetuses: split table with single value cell per fetus
+                                    if (fetusQty <= 3) {
+                                        const paramRows = [];
+                                        for (let i = 0; i < rows.length; i += 2) paramRows.push(rows.slice(i, i + 2));
+                                        const paramWidth = fetusQty === 2 ? 'w-[26%]' : 'w-[20%]';
+                                        const fetusWidth = fetusQty === 2 ? 'w-[12%]' : 'w-[10%]';
+                                        return (
+                                            <div key={nabField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                                <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                    <thead>
+                                                        <tr className="bg-slate-900 text-white">
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700`}>Parameter</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`l-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center border-r border-slate-700`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                            <th className={`${paramWidth} px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700 border-l-[1.5px] border-l-slate-950`}>Parameter</th>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                <th key={`r-${i}`} className={`${fetusWidth} px-1 py-2 text-[7px] font-black uppercase tracking-widest text-center ${i < fetusQty - 1 ? 'border-r border-slate-700' : ''}`}>F {String.fromCharCode(65 + i)}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-200">
+                                                        {paramRows.map((row, idx) => (
+                                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                                {row.map((param, colIdx) => {
+                                                                    const isRight = colIdx === 1;
+                                                                    return (
+                                                                        <React.Fragment key={param}>
+                                                                            <td className={`px-2 py-1 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200 ${isRight ? 'border-l-[1.5px] border-l-slate-950' : ''}`}>{param}</td>
+                                                                            {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                                const val = getNabValue(param, i);
+                                                                                const isAB = val === 'AB';
+                                                                                const isLastInHalf = i === fetusQty - 1;
+                                                                                return (
+                                                                                    <td key={i} className={`px-1 py-1 text-center ${isRight && isLastInHalf ? '' : 'border-r border-slate-100'}`}>
+                                                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${isAB ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{val}</span>
+                                                                                    </td>
+                                                                                );
+                                                                            })}
+                                                                        </React.Fragment>
+                                                                    );
+                                                                })}
+                                                                {row.length === 1 && (
+                                                                    <React.Fragment>
+                                                                        <td className="px-2 py-1 bg-slate-50 border-r border-slate-200 border-l-[1.5px] border-l-slate-950"></td>
+                                                                        {Array.from({ length: fetusQty }).map((_, i) => (
+                                                                            <td key={`e-${i}`} className={`px-1 py-1 ${i === fetusQty - 1 ? '' : 'border-r border-slate-100'}`}></td>
+                                                                        ))}
+                                                                    </React.Fragment>
+                                                                )}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        );
+                                    }
+
+                                    // 4+ fetuses: full linear table with single value cell per fetus
+                                    return (
+                                        <div key={nabField.id} className="mt-[-1.5px] border-[1.5px] border-slate-950 overflow-hidden shadow-sm">
+                                            <table className="w-full text-left border-collapse table-fixed divide-y divide-slate-200">
+                                                <thead>
+                                                    <tr className="bg-slate-900 text-white">
+                                                        <th className="w-[30%] px-3 py-2 text-[8px] font-black uppercase tracking-widest border-r border-slate-700">Parameter</th>
+                                                        {Array.from({ length: fetusQty }).map((_, i) => (
+                                                            <th key={i} className="px-2 py-2 text-[7px] font-black uppercase tracking-widest text-center border-r border-slate-700 last:border-r-0">F {String.fromCharCode(65 + i)}</th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-200">
+                                                    {rows.map((param, pIdx) => (
+                                                        <tr key={param} className={pIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}>
+                                                            <td className="px-3 py-1 bg-slate-50 text-[8px] font-black text-slate-600 uppercase tracking-tight border-r border-slate-200">{param}</td>
+                                                            {Array.from({ length: fetusQty }).map((_, i) => {
+                                                                const val = getNabValue(param, i);
+                                                                const isAB = val === 'AB';
+                                                                return (
+                                                                    <td key={i} className="px-1 py-1 text-center border-r border-slate-100 last:border-r-0">
+                                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${isAB ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{val}</span>
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         );
                     })}
@@ -373,8 +817,8 @@ const PrintLayout: React.FC = () => {
                         <div className="flex flex-col">
                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Physician Verification</span>
                             <div className="w-48 h-px bg-slate-200 mb-4" />
-                            <div className="text-[12px] font-black text-slate-900 uppercase tracking-tight italic leading-none">Dr. Administrator</div>
-                            <div className="text-[8px] font-bold text-medical-primary uppercase tracking-[0.1em] mt-1">Senior Consultant Diagnostic Radiologist</div>
+                            <div className="text-[12px] font-black text-slate-900 uppercase tracking-tight italic leading-none">{signerName}</div>
+                            <div className="text-[8px] font-bold text-medical-primary uppercase tracking-[0.1em] mt-1">{signerDesignation}</div>
                         </div>
                     </div>
                 </div>
@@ -382,26 +826,37 @@ const PrintLayout: React.FC = () => {
 
             <style>{`
                 @media print {
-                    body * { visibility: hidden !important; }
-                    #print-area, #print-area * { visibility: visible !important; }
-                    #print-area { 
-                        position: absolute !important; 
-                        left: 0 !important; 
-                        top: 0 !important; 
-                        width: 100% !important; 
-                        margin: 0 !important; 
-                        padding: 0 !important;
-                    }
                     @page { 
                         size: A4 portrait;
                         margin: 15mm; 
                     }
+                    
+                    /* Hide elements marked as no-print */
                     .no-print { display: none !important; }
+                    
+                    #print-area { 
+                        display: block !important;
+                        visibility: visible !important;
+                        position: relative !important;
+                        width: 100% !important; 
+                        margin: 0 !important; 
+                        padding: 0 !important;
+                        background: white !important;
+                    }
+
+                    #print-area * {
+                        visibility: visible !important;
+                    }
+
                     .signature-block { 
                         page-break-inside: avoid !important; 
                         break-inside: avoid !important;
                         display: flex !important;
+                        margin-top: 2rem !important;
                     }
+
+                    /* Prevent empty sections from taking space */
+                    div:empty { display: none !important; }
                 }
             `}</style>
         </div>

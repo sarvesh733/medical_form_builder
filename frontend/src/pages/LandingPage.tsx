@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ArrowRight, Zap, Shield, Users, CheckCircle } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,28 +51,29 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white overflow-hidden transition-colors">
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-sky-400/20 dark:bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-400/20 dark:bg-cyan-500/10 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 opacity-[0.04] [background-image:radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.14)_1px,transparent_0)] [background-size:24px_24px] dark:opacity-[0.03]" />
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 border-b border-white/10">
+      <nav className="relative z-10 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 border-b border-slate-200/90 dark:border-white/10 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
             <Heart size={24} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
             MedicalBuilder
           </h1>
         </div>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <button
             onClick={() => navigate('/login')}
-            className="px-6 py-2 rounded-lg text-slate-300 hover:text-white transition-colors duration-200"
+            className="px-6 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors duration-200"
           >
             Sign In
           </button>
@@ -94,11 +96,11 @@ const LandingPage: React.FC = () => {
         <motion.div variants={itemVariants} className="text-center mb-12">
           <h2 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
             Build Medical Forms
-            <span className="block bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-sky-600 via-cyan-600 to-sky-600 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
               Instantly
             </span>
           </h2>
-          <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-8">
+          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-8">
             Create, customize, and deploy professional medical forms without writing a single line of code.
           </p>
         </motion.div>
@@ -114,7 +116,7 @@ const LandingPage: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/login')}
-            className="px-8 py-4 border-2 border-white/20 rounded-lg font-semibold text-lg hover:border-white/40 hover:bg-white/5 transition-all duration-200 flex items-center justify-center gap-2"
+            className="px-8 py-4 border-2 border-slate-300 dark:border-white/20 rounded-lg font-semibold text-lg hover:border-slate-500 dark:hover:border-white/40 hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-200 flex items-center justify-center gap-2"
           >
             Sign In to Dashboard
           </button>
@@ -122,11 +124,11 @@ const LandingPage: React.FC = () => {
 
         {/* Video/Screenshot placeholder */}
         <motion.div variants={itemVariants} className="relative">
-          <div className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 rounded-2xl border border-white/10 p-1 overflow-hidden">
-            <div className="bg-slate-800/80 rounded-xl p-8 md:p-12 backdrop-blur-sm flex items-center justify-center min-h-[300px]">
+          <div className="bg-gradient-to-br from-sky-500/20 to-cyan-500/20 rounded-2xl border border-slate-200 dark:border-white/10 p-1 overflow-hidden shadow-xl shadow-sky-100 dark:shadow-none">
+            <div className="bg-white/90 dark:bg-slate-800/80 rounded-xl p-8 md:p-12 backdrop-blur-sm flex items-center justify-center min-h-[300px]">
               <div className="text-center">
-                <Heart size={64} className="mx-auto mb-4 text-blue-400 opacity-50" />
-                <p className="text-slate-400">Medical Form Builder Preview</p>
+                <Heart size={64} className="mx-auto mb-4 text-sky-600 dark:text-blue-400 opacity-60" />
+                <p className="text-slate-600 dark:text-slate-400">Medical Form Builder Preview</p>
               </div>
             </div>
           </div>
@@ -152,11 +154,11 @@ const LandingPage: React.FC = () => {
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all duration-300"
+                className="bg-white/85 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-6 hover:border-sky-500/50 hover:bg-sky-500/5 transition-all duration-300"
               >
-                <Icon size={32} className="mb-4 text-blue-400" />
+                <Icon size={32} className="mb-4 text-sky-600 dark:text-blue-400" />
                 <h4 className="text-lg font-semibold mb-2">{feature.title}</h4>
-                <p className="text-slate-400">{feature.description}</p>
+                <p className="text-slate-600 dark:text-slate-400">{feature.description}</p>
               </motion.div>
             );
           })}
@@ -187,9 +189,9 @@ const LandingPage: React.FC = () => {
             <motion.div
               key={index}
               variants={itemVariants}
-              className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10 hover:border-cyan-500/50 transition-all"
+              className="flex items-center gap-4 p-4 rounded-lg bg-white/85 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-cyan-500/50 transition-all"
             >
-              <CheckCircle size={24} className="text-cyan-400 flex-shrink-0" />
+              <CheckCircle size={24} className="text-cyan-600 dark:text-cyan-400 flex-shrink-0" />
               <span className="text-lg">{benefit}</span>
             </motion.div>
           ))}
@@ -205,7 +207,7 @@ const LandingPage: React.FC = () => {
         viewport={{ once: true }}
       >
         <h3 className="text-4xl font-bold mb-6">Ready to get started?</h3>
-        <p className="text-xl text-slate-400 mb-8">
+        <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">
           Join medical professionals using MedicalBuilder to streamline their workflow
         </p>
         <button

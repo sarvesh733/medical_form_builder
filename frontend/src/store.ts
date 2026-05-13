@@ -12,6 +12,7 @@ export const useStore = create<TemplateStore>()(
 
       setDarkMode: (val: boolean) => {
         set({ darkMode: val });
+        localStorage.setItem('medical_builder_theme', val ? 'dark' : 'light');
         if (val) {
           document.documentElement.classList.add('dark');
         } else {
@@ -31,17 +32,20 @@ export const useStore = create<TemplateStore>()(
           return {
             templates,
             activeTemplate: nextActiveTemplate,
-            formValues: {}, // Clear form values when loading templates
           };
         });
       },
-      saveActiveTemplateToApi: async () => {
+      saveActiveTemplateToApi: async (templateName?: string) => {
         const { activeTemplate, templates } = get();
         if (!activeTemplate) {
           throw new Error('No active template selected');
         }
 
-        const savedTemplate = await saveTemplate(activeTemplate);
+        const templateToSave = templateName
+          ? { ...activeTemplate, name: templateName }
+          : activeTemplate;
+
+        const savedTemplate = await saveTemplate(templateToSave);
         const exists = templates.some((template) => template.id === savedTemplate.id);
 
         set((state: TemplateStore) => ({

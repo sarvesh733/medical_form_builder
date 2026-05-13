@@ -1,16 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Layers, Settings, ChevronRight, Database, User } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Plus, ChevronRight, Menu, X, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from './store';
 import { MedicalTemplate } from './types';
 import { DEFAULT_SCHEMAS } from './schemas';
+import { getCurrentUser } from './auth';
+import { fetchTemplates } from './api/templates';
 import Sidebar from './components/Sidebar';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import Navbar from './components/Navbar';
 import PrintLayout from './components/PrintLayout';
-import { fetchScanEvent, saveScanEventData } from './api/scanEvents';
+import { fetchScanEvent, fetchScanEventHistory, saveScanEventData, type ScanEventHistoryEntry } from './api/scanEvents';
 
 type EventPatient = {
   patient_id: string;
@@ -26,12 +29,150 @@ type EventPatient = {
   country: string;
   aadhar_number: string;
   email: string;
+  scan_type?: string;
 };
 
 type TemplateFieldMeta = {
   standard_key: string;
   field_name?: string;
   field_type?: string;
+};
+
+type EventTemplateField = {
+  standard_key: string;
+  field_name?: string;
+  field_type?: string;
+  section_id?: string;
+  section_title?: string;
+  is_required?: boolean;
+  sort_order?: number;
+  options_json?: Array<{ label: string; value: string }> | null;
+  conditional_json?: {
+    fieldId: string;
+    operator: 'equals' | 'not_equals' | 'contains' | 'truthy' | 'greater_than' | 'less_than';
+    value: unknown;
+  } | null;
+};
+
+const getDefaultSectionMeta = (scanType: string | undefined, sectionId: string) => {
+  if (!scanType) {
+    return undefined;
+  }
+
+  const matchingSchemas = Object.values(DEFAULT_SCHEMAS).filter((schema) => schema.scanType === scanType);
+
+  for (const schema of matchingSchemas) {
+    const section = schema.sections?.find((item) => item.id === sectionId);
+    if (section) {
+      return section;
+    }
+  }
+
+  return undefined;
+};
+
+const buildTemplateFromEvent = (event: {
+  template_id: string;
+  template?: {
+    title?: string;
+    scan_type?: string;
+    fields?: EventTemplateField[];
+  };
+  created_at?: string;
+  updated_at?: string;
+  doctor_id?: string;
+}): MedicalTemplate | null => {
+  const fields = event.template?.fields ?? [];
+  if (fields.length === 0) {
+    return null;
+  }
+
+  // Get the schema definition to merge metadata like section conditionals
+  const schemaEntry = Object.entries(DEFAULT_SCHEMAS).find(([key, s]) => {
+    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const target = normalize(event.template?.scan_type || '');
+    return normalize(key) === target || normalize(s.scanType || '') === target;
+  });
+  const schemaTemplate = schemaEntry ? schemaEntry[1] : undefined;
+
+  const sectionMap = new Map<string, MedicalTemplate['sections'][number]>();
+
+  fields
+    .slice()
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .forEach((field) => {
+      const sectionId = field.section_id ?? 'section_default';
+      const sectionTitle = field.section_title ?? 'Section';
+      const defaultSection = getDefaultSectionMeta(event.template?.scan_type, sectionId);
+
+      if (!sectionMap.has(sectionId)) {
+        sectionMap.set(sectionId, {
+          id: sectionId,
+          title: sectionTitle,
+          fields: [],
+          layout: defaultSection?.layout,
+          isCollapsible: defaultSection?.isCollapsible,
+          conditional: defaultSection?.conditional,
+        });
+      }
+
+      const section = sectionMap.get(sectionId)!;
+      const defaultField = defaultSection?.fields.find((item) => item.id === field.standard_key);
+
+      section.fields.push({
+        id: field.standard_key,
+        type: (defaultField?.type || field.field_type) as MedicalTemplate['sections'][number]['fields'][number]['type'],
+        label: field.field_name ?? '',
+        required: Boolean(field.is_required),
+        options: defaultField?.options || field.options_json || undefined,
+        conditional: defaultField?.conditional || (field.conditional_json
+          ? {
+            fieldId: field.conditional_json.fieldId,
+            operator: field.conditional_json.operator,
+            value: field.conditional_json.value,
+          }
+          : undefined),
+        placeholder: defaultField?.placeholder || '',
+        defaultValue: defaultField?.defaultValue,
+        columns: defaultField?.columns,
+        tableType: defaultField?.tableType,
+        rows: defaultField?.rows,
+        vessels: defaultField?.vessels,
+        variables: defaultField?.variables,
+        metadata: defaultField?.metadata,
+      });
+    });
+
+  // Merge with schema to ensure all sections from schema are present with their conditionals
+  let finalSections = Array.from(sectionMap.values());
+  if (schemaTemplate) {
+    finalSections = (schemaTemplate.sections || []).map((schemaSection) => {
+      const dbSection = sectionMap.get(schemaSection.id);
+      if (dbSection) {
+        // Merge database section with schema section, keeping database fields but schema metadata
+        return {
+          ...dbSection,
+          conditional: schemaSection.conditional, // Use schema's conditional logic
+          layout: dbSection.layout || schemaSection.layout,
+          isCollapsible: dbSection.isCollapsible !== undefined ? dbSection.isCollapsible : schemaSection.isCollapsible,
+        };
+      }
+      // Return schema section as-is if not in database
+      return schemaSection;
+    });
+  }
+
+  return {
+    id: event.template_id,
+    name: event.template?.title ?? `${event.template?.scan_type ?? 'Scan'} Template`,
+    scanType: (event.template?.scan_type as MedicalTemplate['scanType']) ?? 'Medical History',
+    version: '1',
+    createdAt: event.created_at ?? new Date().toISOString(),
+    updatedAt: event.updated_at ?? new Date().toISOString(),
+    createdBy: event.doctor_id ?? 'D01',
+    persisted: true,
+    sections: finalSections,
+  };
 };
 
 const applyPatientPrefill = (
@@ -84,8 +225,163 @@ const applyPatientPrefill = (
   return next;
 };
 
+const resolveTemplateFromScanType = async (scanType: string | undefined): Promise<MedicalTemplate | null> => {
+  if (!scanType) {
+    return null;
+  }
+
+  try {
+    const currentUser = getCurrentUser();
+    
+    // Fetch ALL templates for this scan_type across all doctors
+    console.log(`[resolveTemplate] Fetching all templates for scan_type: ${scanType}`);
+    const response = await fetch(
+      `http://localhost:5000/templates?scan_type=${encodeURIComponent(scanType)}&all_for_scantype=true`,
+      {
+        headers: {
+          'x-user-id': currentUser?.user_id || '',
+          'x-user-role': currentUser?.role || '',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Failed to fetch templates for scan_type: ${response.statusText}`);
+      throw new Error('Failed to fetch templates');
+    }
+
+    const templates = await response.json() as Array<{
+      template_id: string;
+      doctor_id: string;
+      scan_type: string;
+      title: string;
+      version: number;
+      created_at: string;
+      updated_at: string;
+      fields: any[];
+    }>;
+
+    if (templates.length === 0) {
+      // Fall back to system default
+      const schemaEntry = Object.entries(DEFAULT_SCHEMAS).find(([key, s]) => {
+        const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return normalize(key) === normalize(scanType) || normalize(s.scanType || '') === normalize(scanType);
+      });
+      const schema = schemaEntry ? schemaEntry[1] : undefined;
+
+      if (schema) {
+        console.log(`[resolveTemplate] Using system default for ${scanType}`);
+        return schema as MedicalTemplate;
+      }
+      return null;
+    }
+
+    // Convert backend templates to MedicalTemplate format
+    const convert = (template: any): MedicalTemplate => {
+      // Get schema to merge metadata like section conditionals
+      const schemaTemplate = Object.values(DEFAULT_SCHEMAS).find(s => {
+        const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return normalize(s.scanType || '') === normalize(template.scan_type);
+      });
+
+      const sectionMap = new Map<string, any>();
+
+      (template.fields || [])
+        .sort((a: any, b: any) => a.sort_order - b.sort_order)
+        .forEach((fieldRow: any) => {
+          const sectionId = fieldRow.section_id ?? 'default-section';
+          const sectionTitle = fieldRow.section_title ?? 'Default Section';
+          const schemaSection = schemaTemplate?.sections?.find((s) => s.id === sectionId);
+
+          if (!sectionMap.has(sectionId)) {
+            sectionMap.set(sectionId, {
+              id: sectionId,
+              title: sectionTitle,
+              fields: [],
+              layout: schemaSection?.layout,
+              isCollapsible: schemaSection?.isCollapsible,
+              conditional: schemaSection?.conditional,
+            });
+          }
+
+          const section = sectionMap.get(sectionId);
+          const schemaField = schemaSection?.fields?.find((f) => f.id === fieldRow.standard_key);
+          
+          section.fields.push({
+            id: fieldRow.standard_key,
+            type: fieldRow.field_type || schemaField?.type || 'text',
+            label: fieldRow.field_name,
+            required: fieldRow.is_required,
+            placeholder: schemaField?.placeholder,
+            conditional: fieldRow.conditional_json || schemaField?.conditional,
+            options: fieldRow.options_json || schemaField?.options,
+          });
+        });
+
+      // Merge with schema to ensure all sections from schema are present with their conditionals
+      let finalSections = Array.from(sectionMap.values());
+      if (schemaTemplate) {
+        finalSections = (schemaTemplate.sections || []).map((schemaSection) => {
+          const dbSection = sectionMap.get(schemaSection.id);
+          if (dbSection && dbSection.fields.length > 0) {
+            return dbSection;
+          }
+          return schemaSection;
+        });
+      }
+
+      return {
+        id: template.template_id,
+        name: template.title || `${template.scan_type} Template`,
+        scanType: template.scan_type as MedicalTemplate['scanType'],
+        version: String(template.version),
+        createdAt: template.created_at,
+        updatedAt: template.updated_at,
+        createdBy: template.doctor_id,
+        persisted: true,
+        sections: finalSections,
+      };
+    };
+
+    // Priority 1: Current doctor's custom templates
+    const doctorCustom = templates.filter(t => t.doctor_id === currentUser?.user_id && t.doctor_id !== 'D01');
+    if (doctorCustom[0]) {
+      console.log(`[resolveTemplate] Using ${currentUser?.name}'s custom template for ${scanType}: ${doctorCustom[0].template_id}`);
+      return convert(doctorCustom[0]);
+    }
+
+    // Priority 2: System default template (D01) - skip other doctors' custom
+    const defaults = templates.filter(t => t.doctor_id === 'D01');
+    if (defaults[0]) {
+      console.log(`[resolveTemplate] Using default template for ${scanType}: ${defaults[0].template_id}`);
+      return convert(defaults[0]);
+    }
+
+    // Priority 3: Fallback to first available (shouldn't reach here usually)
+    return convert(templates[0]);
+  } catch (error) {
+    console.error('Failed to resolve template from scan type:', error);
+    // Try system defaults as fallback
+    const schemaEntry = Object.entries(DEFAULT_SCHEMAS).find(([key, s]) => {
+      const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return normalize(key) === normalize(scanType) || normalize(s.scanType || '') === normalize(scanType);
+    });
+    const schema = schemaEntry ? schemaEntry[1] : undefined;
+    if (schema) {
+      console.log(`[resolveTemplate] Fallback to system default for ${scanType}`);
+      return schema as MedicalTemplate;
+    }
+    return null;
+  }
+};
+
 const AppBuilder: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const currentUser = getCurrentUser();
+  const isTypist = currentUser?.role === 'typist';
+  const isDoctor = currentUser?.role === 'doctor';
+  const isAdmin = currentUser?.role === 'admin';
+  const isReceptionist = currentUser?.role === 'receptionist';
   const {
     activeTemplate,
     setActiveTemplate,
@@ -96,11 +392,20 @@ const AppBuilder: React.FC = () => {
   const [isSavingReport, setIsSavingReport] = useState(false);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
   const [eventPatient, setEventPatient] = useState<EventPatient | null>(null);
+  const [eventHistory, setEventHistory] = useState<ScanEventHistoryEntry[]>([]);
+  const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+  const [showPropertiesMobile, setShowPropertiesMobile] = useState(false);
 
   const eventId = searchParams.get('eventId');
   const templateIdFromUrl = searchParams.get('templateId');
   const hasEventContext = Boolean(eventId);
+
+  // Template structure is locked if we are filling an event or if the template is already saved/persisted
   const isTemplateLocked = hasEventContext || Boolean(activeTemplate?.persisted);
+
+  // Data is read-only only if the user is a receptionist or if we are in builder mode without an event
+  // Doctors and typists should ALWAYS be able to edit data when there is an event context
+  const isReadOnlyData = isReceptionist || (!hasEventContext && isTemplateLocked);
 
   const reportPayload = useMemo(() => formValues, [formValues]);
 
@@ -111,12 +416,18 @@ const AppBuilder: React.FC = () => {
   }, [loadTemplatesFromApi]);
 
   useEffect(() => {
+    if (!eventId && !templateIdFromUrl) {
+      setActiveTemplate(null);
+      return;
+    }
+
     if (!templateIdFromUrl) {
       return;
     }
 
+    console.log(`[AppBuilder] Setting active template: ${templateIdFromUrl}`);
     setActiveTemplate(templateIdFromUrl);
-  }, [setActiveTemplate, templateIdFromUrl]);
+  }, [eventId, templateIdFromUrl, setActiveTemplate]);
 
   useEffect(() => {
     if (!eventId) {
@@ -124,9 +435,45 @@ const AppBuilder: React.FC = () => {
     }
 
     fetchScanEvent(eventId)
-      .then((event) => {
+      .then(async (event) => {
+        let resolvedTemplate: MedicalTemplate | null = null;
+
+        const scanTypeToResolve = event.scan_type || event.patient?.scan_type;
+        if (!event.template_id && scanTypeToResolve) {
+          console.log(`[AppBuilder] No template_id for event, resolving from scan_type: ${scanTypeToResolve}`);
+          resolvedTemplate = await resolveTemplateFromScanType(scanTypeToResolve);
+          
+          if (resolvedTemplate) {
+            console.log(`[AppBuilder] Resolved template: ${resolvedTemplate.id}`);
+            event.template_id = resolvedTemplate.id;
+          } else {
+            console.warn(`[AppBuilder] Could not resolve template for scan_type: ${scanTypeToResolve}`);
+          }
+        }
+
         if (event.template_id) {
-          setActiveTemplate(event.template_id);
+          const store = useStore.getState();
+          const hasTemplateInStore = store.templates.some((template) => template.id === event.template_id);
+
+          if (hasTemplateInStore) {
+            setActiveTemplate(event.template_id);
+          } else if (resolvedTemplate) {
+            // Use the resolved template we just found
+            useStore.setState((state) => ({
+              templates: [resolvedTemplate, ...state.templates.filter((template) => template.id !== resolvedTemplate.id)],
+              activeTemplate: resolvedTemplate,
+            }));
+          } else {
+            const rebuiltTemplate = buildTemplateFromEvent(event as any);
+            if (rebuiltTemplate) {
+              useStore.setState((state) => ({
+                templates: [rebuiltTemplate, ...state.templates.filter((template) => template.id !== rebuiltTemplate.id)],
+                activeTemplate: rebuiltTemplate,
+              }));
+            } else {
+              setActiveTemplate(event.template_id);
+            }
+          }
         }
 
         const values = (event.data?.data ?? {}) as Record<string, any>;
@@ -147,8 +494,23 @@ const AppBuilder: React.FC = () => {
       });
   }, [eventId, setActiveTemplate, setFormValues]);
 
-  const handleSaveReport = async () => {
+  useEffect(() => {
     if (!eventId) {
+      setEventHistory([]);
+      return;
+    }
+
+    fetchScanEventHistory(eventId)
+      .then((history) => {
+        setEventHistory(history);
+      })
+      .catch((error) => {
+        console.error('Failed to load scan event history:', error);
+      });
+  }, [eventId, isSavingReport]);
+
+  const handleSaveReport = async () => {
+    if (!eventId || isReceptionist) {
       return;
     }
 
@@ -166,7 +528,7 @@ const AppBuilder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-medical-dark text-slate-800 dark:text-slate-200 selection:bg-medical-primary/30 transition-colors duration-300">
+    <div className="tablet-autoscale min-h-screen bg-slate-50 dark:bg-medical-dark text-slate-800 dark:text-slate-200 selection:bg-medical-primary/30 transition-colors duration-300">
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-medical-primary/10 rounded-full blur-[120px] animate-pulse" />
@@ -174,32 +536,24 @@ const AppBuilder: React.FC = () => {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
       </div>
 
-      <div className="relative z-10 flex flex-col h-screen">
-        <Navbar onTogglePreview={() => {}} isPreview={false} lockTemplateEditing={isTemplateLocked} />
+      <div className="relative z-10 flex min-h-screen flex-col no-print">
+        <Navbar
+          onTogglePreview={() => { }}
+          isPreview={false}
+          lockTemplateEditing={isTemplateLocked}
+          hasEventContext={hasEventContext}
+          eventId={eventId}
+          eventPatientName={eventPatient?.name ?? null}
+          eventPatientPid={eventPatient?.pid ?? null}
+          eventPatientPhone={eventPatient?.phone ?? null}
+          reportStatus={reportStatus}
+          isSavingReport={isSavingReport}
+          onSaveReport={handleSaveReport}
+          canEditReport={!isReceptionist}
+          eventHistory={eventHistory}
+        />
 
-        {hasEventContext && (
-          <div className="px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-amber-50 dark:bg-amber-900/20 grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
-            <div>
-              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Scan Event Mode: {eventId}</p>
-              <p className="text-xs text-amber-600 dark:text-amber-200">Fill form values and save report JSON for this event.</p>
-              {eventPatient && (
-                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1">
-                  Patient: <span className="font-semibold">{eventPatient.name}</span> (PID: {eventPatient.pid}) | Phone: {eventPatient.phone}
-                </p>
-              )}
-              {reportStatus && <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{reportStatus}</p>}
-            </div>
-            <button
-              onClick={handleSaveReport}
-              disabled={isSavingReport}
-              className="px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-bold text-xs uppercase tracking-wider disabled:opacity-60"
-            >
-              {isSavingReport ? 'Saving...' : 'Save Report Data'}
-            </button>
-          </div>
-        )}
-        
-        <main className="flex flex-1 overflow-hidden">
+        <main className="builder-main-shell flex flex-1 min-h-0 overflow-hidden">
           {!activeTemplate ? (
             <Dashboard onNew={(template) => {
               useStore.setState((state) => ({
@@ -210,24 +564,60 @@ const AppBuilder: React.FC = () => {
           ) : (
             <>
               {!isTemplateLocked && <Sidebar className="hidden lg:flex" />}
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white/[0.02] border-x border-slate-200 dark:border-white/5">
-                <Canvas isLocked={isTemplateLocked} />
+              <div className="builder-canvas-shell relative flex-1 overflow-y-auto custom-scrollbar bg-white/[0.02] border-x border-slate-200 dark:border-white/5">
+                {!isTemplateLocked && (
+                  <>
+                    <button
+                      onClick={() => setShowSidebarMobile(!showSidebarMobile)}
+                      className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-xl bg-medical-primary text-white shadow-lg hover:shadow-neon-glow transition-all lg:hidden"
+                    >
+                      {showSidebarMobile ? <X size={20} /> : <Menu size={20} />}
+                    </button>
+                    <button
+                      onClick={() => setShowPropertiesMobile(!showPropertiesMobile)}
+                      className="fixed bottom-20 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-600 text-white shadow-lg hover:shadow-neon-glow transition-all xl:hidden"
+                    >
+                      {showPropertiesMobile ? <X size={20} /> : <Settings size={20} />}
+                    </button>
+                  </>
+                )}
+                <Canvas isLocked={isTemplateLocked} isReadOnlyData={isReadOnlyData} />
               </div>
               {!isTemplateLocked && <PropertiesPanel className="hidden xl:flex" />}
+
+              {showSidebarMobile && !isTemplateLocked && createPortal(
+                <div
+                  className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+                  onClick={() => setShowSidebarMobile(false)}
+                >
+                  <div
+                    className="absolute left-0 top-0 h-full w-72 shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Sidebar className="flex" />
+                  </div>
+                </div>,
+                document.body,
+              )}
+
+              {showPropertiesMobile && !isTemplateLocked && createPortal(
+                <div
+                  className="fixed inset-0 z-30 bg-black/40 xl:hidden"
+                  onClick={() => setShowPropertiesMobile(false)}
+                >
+                  <div
+                    className="absolute right-0 top-0 h-full w-80 shadow-2xl overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <PropertiesPanel className="flex" />
+                  </div>
+                </div>,
+                document.body,
+              )}
             </>
           )}
         </main>
 
-        <footer className="h-8 glass border-t border-slate-200 dark:border-white/10 flex items-center justify-between px-4 text-[10px] uppercase tracking-wider text-slate-500 font-mono">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1"><Database size={12} className="text-medical-primary" /> System: Online</span>
-            <span className="flex items-center gap-1"><Layers size={12} /> Version: 2.4.0-Alpha</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1 text-medical-neon"><Settings size={12} /> Syncing...</span>
-            <span className="flex items-center gap-1 cursor-pointer hover:text-slate-900 dark:hover:text-white" onClick={() => setActiveTemplate(null)}><User size={12} /> Dashboard</span>
-          </div>
-        </footer>
       </div>
 
       {/* Persistent Hidden Print Region */}
@@ -268,9 +658,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNew }) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-8 overflow-y-auto custom-scrollbar">
-      <div className="my-auto w-full flex flex-col items-center">
-        <motion.div 
+    <div className="flex-1 flex flex-col items-center w-full px-4 sm:px-6 md:px-8 py-8 sm:py-10 overflow-y-auto custom-scrollbar">
+      <div className="my-auto w-full max-w-6xl flex flex-col items-center">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
@@ -283,7 +673,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNew }) => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
+        <div className="grid w-full grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 md:gap-6">
           {types.map((type, idx) => (
             <motion.button
               key={type.name}
@@ -295,7 +685,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNew }) => {
               className="glass transition-all duration-300 hover:bg-white dark:hover:bg-white/[0.08] hover:border-medical-primary/50 p-6 rounded-3xl text-left flex flex-col gap-4 group relative overflow-hidden shadow-xl"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                 <span className="text-6xl font-bold">{type.icon}</span>
+                <span className="text-6xl font-bold">{type.icon}</span>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-medical-primary/10 flex items-center justify-center border border-medical-primary/20 group-hover:border-medical-primary transition-all">
                 <Plus className="text-medical-primary" size={24} />

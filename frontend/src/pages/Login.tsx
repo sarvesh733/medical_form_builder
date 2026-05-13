@@ -107,7 +107,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
@@ -122,7 +122,7 @@ const Login: React.FC = () => {
         <motion.button
           variants={itemVariants}
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft size={20} />
           Back to Home
@@ -138,12 +138,12 @@ const Login: React.FC = () => {
             </span>
           </Link>
           <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-slate-400">Sign in with your role</p>
+          <p className="text-slate-500 dark:text-slate-400">Sign in with your role</p>
         </motion.div>
 
         <motion.div
           variants={itemVariants}
-          className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm"
+          className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-8 backdrop-blur-sm"
         >
           {errors.submit && (
             <motion.div
@@ -161,10 +161,10 @@ const Login: React.FC = () => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
               >
                 {USER_ROLES.map((role) => (
-                  <option key={role} value={role} className="bg-slate-900">
+                  <option key={role} value={role} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     {role}
                   </option>
                 ))}
@@ -184,7 +184,7 @@ const Login: React.FC = () => {
                   autoComplete="email"
                   list="saved-email-options"
                   placeholder="john@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
                 />
                 <datalist id="saved-email-options">
                   {savedEmails.map((email) => (
@@ -206,12 +206,12 @@ const Login: React.FC = () => {
                   onChange={handleChange}
                   autoComplete="current-password"
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 top-3.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -225,9 +225,9 @@ const Login: React.FC = () => {
                 name="rememberMe"
                 checked={formData.rememberMe}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-white/20 bg-slate-800/50 cursor-pointer"
+                className="w-4 h-4 rounded border-slate-300 dark:border-white/20 bg-white dark:bg-slate-800/50 cursor-pointer"
               />
-              <label className="text-sm text-slate-400 cursor-pointer">Remember me</label>
+              <label className="text-sm text-slate-500 dark:text-slate-400 cursor-pointer">Remember me</label>
             </motion.div>
 
             <motion.button
@@ -250,7 +250,7 @@ const Login: React.FC = () => {
             </motion.button>
           </form>
 
-          <motion.p variants={itemVariants} className="text-center mt-6 text-slate-400">
+          <motion.p variants={itemVariants} className="text-center mt-6 text-slate-500 dark:text-slate-400">
             Don't have an account?{' '}
             <Link to="/register" className="text-blue-400 hover:text-cyan-400 font-semibold">
               Create one

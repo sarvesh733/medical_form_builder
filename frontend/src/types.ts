@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'textarea' | 'number' | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'video' | 'region-selector' | 'date' | 'checkbox-group' | 'dynamic-table' | 'grid-matrix' | 'doppler-matrix' | 'biometry-matrix';
+export type FieldType = 'text' | 'textarea' | 'number' | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'video' | 'region-selector' | 'date' | 'checkbox-group' | 'dynamic-table' | 'grid-matrix' | 'doppler-matrix' | 'biometry-matrix' | 'early-pregnancy-matrix' | 'nab-matrix';
 
 export interface FieldOption {
   label: string;
@@ -22,7 +22,7 @@ export interface TemplateField {
   conditional?: ConditionalLogic;
   columns?: string[];
   tableType?: 'general' | 'partner' | 'pregnancy' | 'external-scan' | 'investigations';
-  rows?: number;
+  rows?: number | string[];
   vessels?: string[];
   variables?: string[];
   metadata?: {
@@ -38,6 +38,7 @@ export interface TemplateSection {
   fields: TemplateField[];
   layout?: 'standard' | 'clinical-table' | 'clinical-table-doppler' | 'multifetal-biometry' | 'multifetal-doppler';
   isCollapsible?: boolean;
+  conditional?: ConditionalLogic;
 }
 
 export interface MedicalTemplate {
@@ -50,6 +51,7 @@ export interface MedicalTemplate {
   updatedAt: string;
   createdBy: string;
   persisted?: boolean;
+  isDefault?: boolean;
 }
 
 export type TemplateStore = {
@@ -60,7 +62,7 @@ export type TemplateStore = {
   darkMode: boolean;
   setTemplates: (templates: MedicalTemplate[]) => void;
   loadTemplatesFromApi: () => Promise<void>;
-  saveActiveTemplateToApi: () => Promise<void>;
+  saveActiveTemplateToApi: (templateName?: string) => Promise<void>;
   setActiveTemplate: (id: string | null) => void;
   setDarkMode: (val: boolean) => void;
   updateTemplate: (template: MedicalTemplate) => void;

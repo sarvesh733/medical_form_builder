@@ -14,6 +14,8 @@ export type Patient = {
   country: string;
   aadhar_number: string;
   email: string;
+  trimester: string;
+  scan_type: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -32,6 +34,7 @@ export type CreatePatientPayload = {
   country: string;
   aadhar_number: string;
   email: string;
+  trimester: string;
 };
 
 const API_BASE_URL = 'http://localhost:5000';
@@ -56,7 +59,8 @@ export const createPatient = async (payload: CreatePatientPayload, createdBy?: s
   });
 
   if (!res.ok) {
-    throw new Error('Failed to create patient');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to create patient');
   }
 
   return (await res.json()) as Patient;
@@ -76,4 +80,22 @@ export const fetchPatients = async (): Promise<Patient[]> => {
   }
 
   return (await res.json()) as Patient[];
+};
+
+export const updatePatient = async (patientId: string, payload: Partial<CreatePatientPayload>): Promise<Patient> => {
+  const res = await fetch(`${API_BASE_URL}/patients/${patientId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to update patient');
+  }
+
+  return (await res.json()) as Patient;
 };

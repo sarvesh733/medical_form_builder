@@ -1,7 +1,7 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { 
-  Type, 
   Trash2, 
   AlertCircle,
   ChevronDown,
@@ -9,11 +9,8 @@ import {
   PlayCircle,
   Crosshair,
   Eye,
-  Hash,
-  CheckSquare,
   Check,
   Plus,
-  Grid3X3,
   Columns,
   X
 } from 'lucide-react';
@@ -26,13 +23,94 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const NabCell = ({ 
+  cellId, 
+  val, 
+  readOnly, 
+  onChange 
+}: { 
+  cellId: string; 
+  val: string;
+  readOnly?: boolean;
+  onChange: (val: string) => void;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const [coords, setCoords] = React.useState({ top: 0, left: 0 });
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const isAB = val === 'AB';
+  
+  if (readOnly) {
+    return (
+      <span className={cn(
+        'inline-flex items-center justify-center w-full h-full px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider',
+        isAB ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+      )}>{val}</span>
+    );
+  }
+
+  return (
+    <div className="relative flex items-center justify-center">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!open && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setCoords({
+              top: rect.bottom + window.scrollY,
+              left: rect.left + window.scrollX + rect.width / 2
+            });
+          }
+          setOpen(p => !p);
+        }}
+        className={cn(
+          'w-full px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider border transition-all',
+          isAB
+            ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+            : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+        )}
+      >{val}</button>
+      {open && typeof document !== 'undefined' && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9999]" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div 
+            className="absolute z-[10000] -translate-x-1/2 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl overflow-hidden flex flex-col min-w-[72px]"
+            style={{ top: coords.top, left: coords.left }}
+          >
+            {['N', 'AB'].map(opt => (
+              <button
+                key={opt}
+                type="button"
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  onChange(opt); 
+                  setOpen(false); 
+                }}
+                className={cn(
+                  'px-4 py-2 text-[11px] font-black uppercase tracking-wider transition-all text-left hover:opacity-80',
+                  opt === 'AB' ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-green-50 text-green-700 hover:bg-green-100'
+                )}
+              >{opt}</button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+
 interface FieldRendererProps {
   field: TemplateField;
   sectionId: string;
+  readOnly?: boolean;
+  canDeleteField?: boolean;
   hideIcon?: boolean;
 }
 
-const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIcon }) => {
+const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, readOnly = false, canDeleteField = false, hideIcon = false }) => {
   const { selectedFieldId, setSelectedField, removeField, formValues, setFieldValue } = useStore();
   const isSelected = selectedFieldId === field.id;
 
@@ -40,19 +118,36 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
     const value = formValues[field.id] || '';
 
     switch (field.type) {
+      // case 'text':
+      //   return (
+      //     <input
+      //       type="text"
+      //       value={value}
+      //       onChange={(e) => setFieldValue(field.id, e.target.value)}
+      //       placeholder={field.placeholder || "Enter text..."}
+      //       // className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200"
+      //       className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+      //     />
+      //   );
       case 'text':
         return (
-          <input
-            type="text"
+          <textarea
+            readOnly={readOnly}
             value={value}
             onChange={(e) => setFieldValue(field.id, e.target.value)}
+            onInput={(e: any) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+            }}
             placeholder={field.placeholder || "Enter text..."}
-            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/20 focus:border-medical-primary/50 transition-all duration-300 placeholder:text-slate-500 dark:placeholder:text-slate-600"
+            rows={1}
+            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-none min-h-[48px] break-words whitespace-pre-wrap overflow-hidden"
           />
         );
       case 'textarea':
         return (
           <textarea
+            readOnly={readOnly}
             value={value}
             onChange={(e) => setFieldValue(field.id, e.target.value)}
             onInput={(e: any) => {
@@ -60,50 +155,51 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
               e.target.style.height = e.target.scrollHeight + 'px';
             }}
             placeholder={field.placeholder || "Enter medical notes..."}
-            rows={field.rows || 1}
-            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300 dark:border-white/10 rounded-xl py-3 px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/20 focus:border-medical-primary/50 transition-all duration-300 placeholder:text-slate-500 dark:placeholder:text-slate-600 resize-none min-h-[48px] break-words whitespace-pre-wrap"
+            rows={typeof field.rows === 'number' ? field.rows : 1}
+            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl py-2.5 px-3 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 resize-none min-h-[48px] break-words whitespace-pre-wrap"
           />
         );
       case 'dropdown':
         return (
           <div className="relative group/select">
             <select 
+              disabled={readOnly}
               value={value}
               onChange={(e) => setFieldValue(field.id, e.target.value)}
-              className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-medical-primary/50 appearance-none cursor-pointer"
+              className="w-full bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 appearance-none cursor-pointer disabled:cursor-default"
             >
               <option value="" disabled className="text-slate-400 bg-white dark:bg-[#030712]">{field.placeholder || "Select an option..."}</option>
               {field.options?.map(opt => (
                 <option key={opt.value} value={opt.value} className="bg-white text-slate-900 dark:bg-[#030712] dark:text-white">{opt.label}</option>
               ))}
             </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-500 pointer-events-none group-focus-within/select:text-medical-primary transition-colors" />
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none group-focus-within/select:text-medical-primary transition-colors" />
           </div>
         );
       case 'file':
         return (
-          <div className="w-full border-2 border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center gap-2 bg-white/[0.02] hover:bg-medical-primary/5 hover:border-medical-primary/30 transition-all cursor-pointer">
+          <div className="w-full border border-dashed border-slate-300 dark:border-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-2 bg-slate-50/80 dark:bg-white/[0.02] hover:bg-medical-primary/5 hover:border-medical-primary/25 transition-all cursor-pointer">
             <input type="file" className="hidden" id={`file-${field.id}`} />
             <label htmlFor={`file-${field.id}`} className="flex flex-col items-center gap-2 cursor-pointer w-full">
-              <UploadCloud size={24} className="text-medical-primary opacity-50" />
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Click to upload scan image</span>
+              <UploadCloud size={22} className="text-medical-primary opacity-60" />
+              <span className="text-[11px] text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-[0.12em]">Click to upload scan image</span>
             </label>
           </div>
         );
       case 'video':
         return (
-          <div className="w-full border-2 border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center gap-2 bg-white/[0.02] hover:bg-rose-500/5 hover:border-rose-500/30 transition-all cursor-pointer">
-            <PlayCircle size={24} className="text-rose-500 opacity-50" />
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Dynamic video capture ready</span>
+          <div className="w-full border border-dashed border-slate-300 dark:border-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-2 bg-slate-50/80 dark:bg-white/[0.02] hover:bg-rose-500/5 hover:border-rose-500/25 transition-all cursor-pointer">
+            <PlayCircle size={22} className="text-rose-500 opacity-60" />
+            <span className="text-[11px] text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-[0.12em]">Dynamic video capture ready</span>
           </div>
         );
       case 'region-selector':
         return (
-          <div className="w-full glass aspect-video rounded-lg flex items-center justify-center relative overflow-hidden group/region cursor-crosshair">
-            <div className="absolute inset-0 bg-medical-primary/5 opacity-50 transition-opacity group-hover/region:opacity-70" />
+          <div className="w-full glass aspect-video rounded-xl flex items-center justify-center relative overflow-hidden group/region cursor-crosshair border border-slate-200 dark:border-white/10 bg-white/70 dark:bg-slate-950/20">
+            <div className="absolute inset-0 bg-medical-primary/5 opacity-40 transition-opacity group-hover/region:opacity-60" />
             <div className="relative flex flex-col items-center gap-2 transition-transform group-hover/region:scale-110">
-               <Crosshair size={32} className="text-medical-primary animate-pulse" />
-               <span className="text-[10px] font-bold text-medical-primary uppercase tracking-[0.2em]">Select Region</span>
+               <Crosshair size={28} className="text-medical-primary animate-pulse" />
+               <span className="text-[11px] font-semibold text-medical-primary uppercase tracking-[0.14em]">Select Region</span>
             </div>
           </div>
         );
@@ -112,12 +208,13 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
           <div className="relative">
             <input
               type="number"
+              readOnly={readOnly}
               value={value}
               onChange={(e) => setFieldValue(field.id, e.target.value)}
               placeholder="0.00"
-              className="w-full bg-white dark:bg-slate-950/40 border border-slate-300 dark:border-white/10 rounded-lg p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:bg-slate-300/50 dark:focus:bg-slate-900/60 focus:border-medical-primary/50 transition-all duration-300 placeholder:text-slate-500 dark:placeholder:text-slate-600"
+              className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono opacity-30 text-slate-900 dark:text-white pointer-events-none">NUM</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold opacity-60 text-slate-600 dark:text-slate-400 pointer-events-none">NUM</span>
           </div>
         );
       case 'checkbox': {
@@ -127,6 +224,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
             <div className="relative">
               <input 
                 type="checkbox" 
+                disabled={readOnly}
                 checked={isChecked}
                 onChange={() => setFieldValue(field.id, !isChecked)}
                 className="sr-only" 
@@ -143,7 +241,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                 )} />
               </div>
             </div>
-            <span className="text-xs text-slate-700 dark:text-slate-400 group-hover/check:text-slate-900 dark:group-hover/check:text-white transition-colors uppercase font-bold tracking-tight">
+            <span className="text-sm md:text-[15px] text-slate-800 dark:text-slate-100 group-hover/check:text-slate-900 dark:group-hover/check:text-white transition-colors uppercase font-semibold tracking-[0.06em]">
               {field.label}
             </span>
           </label>
@@ -153,14 +251,15 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
         return (
           <input
             type="date"
+            readOnly={readOnly}
             value={value}
             onChange={(e) => setFieldValue(field.id, e.target.value)}
-            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:bg-slate-300/50 dark:focus:bg-slate-900/60 focus:border-medical-primary/50 transition-all duration-300"
+            className="w-full bg-white dark:bg-slate-950/40 border border-slate-300/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm md:text-[15px] font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-medical-primary/15 focus:border-medical-primary/40 transition-all duration-200"
           />
         );
       case 'checkbox-group':
         return (
-          <div className="flex flex-wrap gap-x-6 gap-y-3 min-h-[44px] items-center">
+          <div className="flex flex-wrap gap-x-5 gap-y-3 min-h-[44px] items-center">
             {field.options?.map(opt => {
               const groupValue = formValues[field.id] || [];
               const isChecked = groupValue.includes(opt.value);
@@ -169,6 +268,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                   <div className="relative">
                     <input 
                       type="checkbox" 
+                      disabled={readOnly}
                       checked={isChecked}
                       onChange={() => {
                         const newValue = isChecked 
@@ -190,7 +290,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                       )} />
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 group-hover/check:text-slate-900 dark:group-hover/check:text-white transition-colors uppercase tracking-tight">
+                  <span className="text-sm md:text-[15px] font-semibold text-slate-800 dark:text-slate-100 group-hover/check:text-slate-900 dark:group-hover/check:text-white transition-colors uppercase tracking-[0.06em]">
                     {opt.label}
                   </span>
                 </label>
@@ -200,7 +300,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
         );
       case 'radio':
         return (
-          <div className="flex flex-wrap gap-8 min-h-[44px] items-center">
+          <div className="flex flex-wrap gap-6 min-h-[44px] items-center">
             {field.options?.map(opt => {
               const isChecked = value === opt.value;
               return (
@@ -208,6 +308,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                   <div className="relative">
                     <input 
                       type="radio" 
+                      disabled={readOnly}
                       name={field.id} 
                       value={opt.value} 
                       checked={isChecked}
@@ -226,7 +327,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                       )} />
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-400 group-hover/radio:text-slate-900 dark:group-hover/radio:text-white transition-colors uppercase tracking-tight">
+                  <span className="text-sm md:text-[15px] font-semibold text-slate-800 dark:text-slate-100 group-hover/radio:text-slate-900 dark:group-hover/radio:text-white transition-colors uppercase tracking-[0.06em]">
                     {opt.label}
                   </span>
                 </label>
@@ -268,18 +369,18 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
 
         return (
           <div 
-            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-950/20 shadow-xl overflow-hidden"
+            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-950/20 shadow-sm overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed min-w-[800px]">
                 <thead>
-                  <tr className="bg-slate-100/50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10">
+                  <tr className="bg-slate-100/80 dark:bg-white/[0.04] border-b border-slate-200 dark:border-white/10">
                     {headers.map(col => (
-                      <th key={col} className="px-4 py-3 text-[10px] font-black text-medical-primary uppercase tracking-widest">{col}</th>
+                      <th key={col} className="px-4 py-3 text-[11px] md:text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-[0.14em]">{col}</th>
                     ))}
                     {tableType !== 'partner' && (
-                      <th className="px-4 py-3 text-[10px] font-black text-medical-primary uppercase tracking-widest text-center w-16">Action</th>
+                      <th className="px-4 py-3 text-[11px] md:text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-[0.14em] text-center w-16">Action</th>
                     )}
                   </tr>
                 </thead>
@@ -297,24 +398,26 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                           
                           return (
                             <td key={col} className="px-1 py-1 text-center w-16">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newRows = [...rows];
-                                  if (isYes) {
-                                    newRows[rIdx] = { ...row, yes: !isSelected, no: false };
-                                  } else {
-                                    newRows[rIdx] = { ...row, no: !isSelected, yes: false };
-                                  }
-                                  setFieldValue(field.id, newRows);
-                                }}
-                                className={cn(
-                                  "w-6 h-6 rounded-md border mx-auto transition-all flex items-center justify-center",
-                                  isSelected 
-                                    ? "bg-medical-primary border-medical-primary shadow-neon-glow" 
-                                    : "bg-white dark:bg-white/5 border-slate-300 dark:border-white/20 hover:border-medical-primary"
-                                )}
-                              >
+                                <button 
+                                  disabled={readOnly}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newRows = [...rows];
+                                    if (isYes) {
+                                      newRows[rIdx] = { ...row, yes: !isSelected, no: false };
+                                    } else {
+                                      newRows[rIdx] = { ...row, no: !isSelected, yes: false };
+                                    }
+                                    setFieldValue(field.id, newRows);
+                                  }}
+                                  className={cn(
+                                    "w-6 h-6 rounded-md border mx-auto transition-all flex items-center justify-center",
+                                    isSelected 
+                                      ? "bg-medical-primary border-medical-primary shadow-neon-glow" 
+                                      : "bg-white dark:bg-white/5 border-slate-300 dark:border-white/20 hover:border-medical-primary",
+                                    readOnly && "cursor-default"
+                                  )}
+                                >
                                 {isSelected && <Check className="text-white w-4 h-4 stroke-[4px]" />}
                               </button>
                             </td>
@@ -325,7 +428,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                         if (isFirstCol && (tableType === 'partner' || tableType === 'pregnancy' || tableType === 'investigations')) {
                           return (
                             <td key={col} className="px-4 py-3 bg-slate-50/30 dark:bg-white/[0.01]">
-                               <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">
+                                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-[0.04em]">
                                 {row[cellKey] || row[col.toLowerCase()] || ''}
                                </span>
                             </td>
@@ -336,6 +439,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                           <td key={col} className="px-1 py-1 align-top">
                             <textarea 
                               rows={1}
+                              readOnly={readOnly}
                               placeholder="---"
                               value={row[cellKey] || ''}
                               onClick={(e) => e.stopPropagation()}
@@ -348,23 +452,25 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                                 newRows[rIdx] = { ...row, [cellKey]: e.target.value };
                                 setFieldValue(field.id, newRows);
                               }}
-                              className="w-full bg-slate-100/30 dark:bg-white/[0.02] border-none rounded-lg p-2 text-[11px] text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-medical-primary/40 outline-none transition-all text-center placeholder:opacity-20 resize-none min-h-[38px] custom-scrollbar break-words whitespace-pre-wrap"
+                              className="w-full bg-slate-100/30 dark:bg-white/[0.02] border-none rounded-lg p-2.5 text-sm md:text-base lg:text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-medical-primary/40 outline-none transition-all text-center placeholder:opacity-25 resize-none min-h-[42px] custom-scrollbar break-words whitespace-pre-wrap"
                             />
                           </td>
                         );
                       })}
                       {tableType !== 'partner' && (
                         <td className="px-2 py-2 text-center w-16">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const newRows = rows.filter((_, i) => i !== rIdx);
-                              setFieldValue(field.id, newRows);
-                            }}
-                            className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {!readOnly && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const newRows = rows.filter((_, i) => i !== rIdx);
+                                setFieldValue(field.id, newRows);
+                              }}
+                              className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </td>
                       )}
                     </tr>
@@ -382,9 +488,14 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                   }
                   setFieldValue(field.id, [...rows, newRowBody]);
                 }}
-                className="w-full py-3 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-medical-primary/10 text-[10px] font-bold text-slate-500 hover:text-medical-primary uppercase tracking-widest flex items-center justify-center gap-2 transition-all border-t border-slate-200 dark:border-white/10"
+                className="w-full py-2.5 bg-slate-50/80 dark:bg-white/[0.02] hover:bg-medical-primary/10 text-[11px] md:text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-medical-primary uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all border-t border-slate-200 dark:border-white/10"
               >
-                <Plus size={14} /> Add Row
+                {!readOnly && (
+                  <>
+                    <Plus size={14} /> Add Row
+                  </>
+                )}
+                {readOnly && <span className="opacity-40">View Only</span>}
               </button>
             )}
           </div>
@@ -397,7 +508,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
 
         return (
           <div 
-            className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-950/20 shadow-xl overflow-hidden group/grid"
+            className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-950/20 shadow-sm overflow-hidden group/grid"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full overflow-x-auto custom-scrollbar">
@@ -414,7 +525,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                             newHeaders[cIdx] = e.target.value;
                             updateField(sectionId, field.id, { columns: newHeaders });
                           }}
-                          className="bg-transparent border-none text-[10px] font-black text-medical-primary uppercase tracking-widest w-full focus:ring-0 outline-none hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 transition-all"
+                          className="bg-transparent border-none text-[11px] md:text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-[0.14em] w-full focus:ring-0 outline-none hover:bg-black/5 dark:hover:bg-white/5 rounded px-1 transition-all"
                         />
                         {headers.length > 1 && (
                           <button 
@@ -452,6 +563,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                           <td key={cIdx} className="px-1 py-1 align-top">
                             <textarea 
                               rows={1}
+                              readOnly={readOnly}
                               placeholder="..."
                               value={row[cellKey] || ''}
                               onInput={(e: any) => {
@@ -463,7 +575,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                                 newRows[rIdx] = { ...row, [cellKey]: e.target.value };
                                 setFieldValue(field.id, newRows);
                               }}
-                              className="w-full bg-transparent border-none rounded-lg p-2 text-[11px] text-slate-700 dark:text-slate-300 focus:ring-1 focus:ring-medical-primary/40 outline-none transition-all text-center resize-none min-h-[38px] custom-scrollbar whitespace-pre-wrap"
+                              className="w-full bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 rounded-lg p-2.5 text-sm md:text-[15px] font-medium text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-medical-primary/20 focus:border-medical-primary/30 outline-none transition-all text-center resize-none min-h-[42px] custom-scrollbar whitespace-pre-wrap"
                             />
                           </td>
                         );
@@ -484,14 +596,72 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                 </tbody>
               </table>
             </div>
-            <button 
-              onClick={() => {
-                setFieldValue(field.id, [...rows, { id: Date.now() }]);
-              }}
-              className="w-full py-2.5 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-medical-primary/10 text-[10px] font-bold text-slate-500 hover:text-medical-primary uppercase tracking-widest flex items-center justify-center gap-2 transition-all border-t border-slate-200 dark:border-white/10"
-            >
-              <Plus size={14} /> Add Row
-            </button>
+            {!readOnly && (
+              <button 
+                onClick={() => {
+                  setFieldValue(field.id, [...rows, { id: Date.now() }]);
+                }}
+                className="w-full py-2.5 bg-slate-50/80 dark:bg-white/[0.02] hover:bg-medical-primary/10 text-[11px] md:text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-medical-primary uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all border-t border-slate-200 dark:border-white/10"
+              >
+                <Plus size={14} /> Add Row
+              </button>
+            )}
+          </div>
+        );
+      }
+      case 'early-pregnancy-matrix': {
+        const rawQty = formValues['ep_fetus_qty'];
+        const fetusQty = Math.max(1, Math.min(12, parseInt(String(rawQty || '1'))));
+        const params = [
+          { id: 'gs', label: 'Gestational Sac', placeholder: 'Size / Position...' },
+          { id: 'ys', label: 'Yolk Sac', placeholder: 'Appearance...' },
+          { id: 'crl', label: 'CRL', placeholder: 'Measurement...' },
+          { id: 'hr', label: 'Heart Rate', placeholder: 'FH/rate...' },
+          { id: 'lt_ov', label: 'Lt. Ovary', placeholder: 'Position...' },
+          { id: 'rt_ov', label: 'Rt. Ovary', placeholder: 'Position...' }
+        ];
+
+        return (
+          <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm border-dashed">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-full">
+                <thead>
+                  <tr className="bg-medical-primary text-white">
+                    <th className="px-5 py-4 text-[11px] md:text-xs font-semibold uppercase tracking-[0.14em] border-r border-white/10">Early Pregnancy Parameters</th>
+                    {Array.from({ length: fetusQty }).map((_, i) => (
+                      <th key={i} className={cn(
+                        "px-4 py-3 text-[11px] md:text-xs font-semibold uppercase text-center border-l border-white/10 bg-black/10",
+                        i === 0 ? "text-white" : "text-white/70"
+                      )}>
+                        Fetus {String.fromCharCode(65 + i)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                  {params.map((p, pIdx) => (
+                    <tr key={p.id} className={cn("hover:bg-medical-primary/5 transition-colors", pIdx % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-white/[0.01]")}>
+                      <td className="px-5 py-3 text-xs font-semibold text-slate-700 dark:text-slate-200 border-r border-slate-200 dark:border-white/5 uppercase tracking-[0.04em]">{p.label}</td>
+                      {Array.from({ length: fetusQty }).map((_, i) => {
+                        const cellId = `${p.id}_f${i}`;
+                        return (
+                          <td key={i} className="px-1 py-1 border-l border-slate-200 dark:border-white/5">
+                            <input 
+                              type="text"
+                              readOnly={readOnly}
+                              placeholder={p.placeholder}
+                              value={formValues[cellId] || ''}
+                              onChange={(e) => setFieldValue(cellId, e.target.value)}
+                              className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-sm md:text-base lg:text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-2.5 placeholder:opacity-25"
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         );
       }
@@ -502,15 +672,15 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
         const metrics = ['Syst', 'Diast', 'R.I.'];
         
         return (
-          <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/50 dark:bg-slate-950/20 shadow-xl border-dashed">
+          <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm border-dashed">
              <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-full">
                   <thead>
                     <tr className="bg-slate-950 text-white">
-                      <th className="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] border-r border-white/10">Vessel Matrix</th>
+                      <th className="px-5 py-4 text-[11px] md:text-xs font-semibold uppercase tracking-[0.14em] border-r border-white/10">Vessel Matrix</th>
                       {Array.from({ length: fetusQty }).map((_, i) => (
                         <th key={i} colSpan={3} className={cn(
-                          "px-4 py-3 text-[10px] font-black uppercase text-center border-l border-white/10 bg-slate-900 shadow-inner",
+                          "px-4 py-3 text-[11px] md:text-xs font-semibold uppercase text-center border-l border-white/10 bg-slate-900/90",
                           i === 0 ? "text-medical-neon" : "text-white/70"
                         )}>
                           Fetus {String.fromCharCode(65 + i)}
@@ -522,7 +692,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                       {Array.from({ length: fetusQty }).map((_, i) => (
                         <React.Fragment key={i}>
                           {metrics.map(m => (
-                            <th key={m} className="px-2 py-2 text-[8px] font-black text-slate-500 uppercase text-center border-l first:border-l-0 border-slate-200 dark:border-white/5">{m}</th>
+                            <th key={m} className="px-2 py-2 text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase text-center border-l first:border-l-0 border-slate-200 dark:border-white/5">{m}</th>
                           ))}
                         </React.Fragment>
                       ))}
@@ -531,7 +701,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                   <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                     {vessels.map((v, vIdx) => (
                        <tr key={v} className={cn("hover:bg-medical-primary/5 transition-colors", vIdx % 2 === 0 ? "bg-transparent" : "bg-slate-50/50 dark:bg-white/[0.01]")}>
-                          <td className="px-5 py-3 text-xs font-black text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-white/5 uppercase tracking-tight italic">{v}</td>
+                          <td className="px-5 py-3 text-xs font-semibold text-slate-700 dark:text-slate-200 border-r border-slate-200 dark:border-white/5 uppercase tracking-[0.04em]">{v}</td>
                           {Array.from({ length: fetusQty }).map((_, i) => (
                             <React.Fragment key={i}>
                               {metrics.map(m => {
@@ -540,10 +710,11 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                                   <td key={m} className="px-1 py-1 border-r border-slate-200 dark:border-white/5">
                                     <input 
                                       type="text"
+                                      readOnly={readOnly}
                                       placeholder="---"
                                       value={formValues[cellId] || ''}
                                       onChange={(e) => setFieldValue(cellId, e.target.value)}
-                                      className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-2.5 placeholder:opacity-20"
+                                      className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-sm md:text-base lg:text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-2.5 placeholder:opacity-25"
                                     />
                                   </td>
                                 );
@@ -563,16 +734,92 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
         const fetusQty = Math.max(1, Math.min(12, parseInt(String(rawQty || '1'))));
         const variables = field.variables || ['BPD (cm)', 'OFD (cm)', 'HC (cm)', 'AC (cm)', 'TBD 1', 'TBD 2', 'TCD', 'Foot', 'Heart', 'FM'];
         
+        // 1-3 fetuses: split vertically into two columns of parameters
+        if (fetusQty < 4) {
+          const paramRows: string[][] = [];
+          for (let i = 0; i < variables.length; i += 2) {
+            paramRows.push(variables.slice(i, i + 2));
+          }
+
+          const paramWidth = fetusQty === 1 ? 'w-[35%]' : fetusQty === 2 ? 'w-[26%]' : 'w-[20%]';
+          const fetusWidth = fetusQty === 1 ? 'w-[15%]' : fetusQty === 2 ? 'w-[12%]' : 'w-[10%]';
+
+          return (
+            <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-medical-primary text-white">
+                      <th className={cn(paramWidth, "px-2 py-2 text-[9px] font-semibold uppercase tracking-wider border-r border-white/10")}>Parameter</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={`l-f${i}`} className={cn(fetusWidth, "px-0.5 py-2 text-[8px] font-semibold uppercase text-center border-r border-white/10 last:border-r-0 bg-white/10")}>
+                          F{String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                      <th className={cn(paramWidth, "px-2 py-2 text-[9px] font-semibold uppercase tracking-wider border-r border-white/10 border-l-2 border-l-medical-primary/30")}>Parameter</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={`r-f${i}`} className={cn(fetusWidth, "px-0.5 py-2 text-[8px] font-semibold uppercase text-center border-r border-white/10 last:border-r-0 bg-white/10")}>
+                          F{String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                    {paramRows.map((row, idx) => (
+                      <tr key={idx} className={cn(idx % 2 !== 0 ? "bg-slate-50/50 dark:bg-white/[0.01]" : "bg-transparent")}>
+                        {row.map((param, colIdx) => (
+                          <React.Fragment key={param}>
+                            <td className={cn(
+                              "px-2 py-1.5 text-[9px] font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase leading-tight",
+                              colIdx === 1 && "border-l-2 border-l-medical-primary/30"
+                            )}>
+                              {param}
+                            </td>
+                            {Array.from({ length: fetusQty }).map((_, i) => {
+                              const cellId = `${field.id}_${param.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}`;
+                              return (
+                                <td key={`f${i}`} className="px-0.5 py-0.5 border-r border-slate-200 dark:border-white/5 text-center last:border-r-0">
+                                  <input 
+                                    type="text"
+                                    readOnly={readOnly}
+                                    placeholder="--"
+                                    value={formValues[cellId] || ''}
+                                    onChange={(e) => setFieldValue(cellId, e.target.value)}
+                                    className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-[10px] md:text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-md py-1 placeholder:opacity-20 transition-all"
+                                  />
+                                </td>
+                              );
+                            })}
+                          </React.Fragment>
+                        ))}
+                        {row.length === 1 && (
+                          <>
+                            <td className="px-2 py-1.5 border-r border-slate-200 dark:border-white/5 border-l-2 border-l-medical-primary/30"></td>
+                            {Array.from({ length: fetusQty }).map((_, i) => (
+                              <td key={`empty-${i}`} className="px-0.5 py-0.5 border-r border-slate-200 dark:border-white/5 last:border-r-0"></td>
+                            ))}
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        }
+
+        // 4+ fetuses standard wide table
         return (
-          <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/50 dark:bg-slate-950/20 shadow-2xl">
+          <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm">
              <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-full">
                   <thead>
                     <tr className="bg-medical-primary text-white dark:text-medical-dark">
-                      <th className="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] border-r border-white/10">Growth Parameters</th>
+                      <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] border-r border-white/10">Growth Parameters</th>
                       {Array.from({ length: fetusQty }).map((_, i) => (
                         <th key={i} className={cn(
-                          "px-4 py-3 text-[10px] font-black uppercase text-center border-l border-white/10",
+                          "px-2 py-2 text-[10px] font-semibold uppercase text-center border-l border-white/10",
                           i === 0 ? "bg-white/10" : "bg-black/10"
                         )}>
                           Fetus {String.fromCharCode(65 + i)}
@@ -583,17 +830,18 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
                   <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                     {variables.map((v, vIdx) => (
                        <tr key={v} className={cn("hover:bg-medical-primary/5 transition-colors", vIdx % 2 !== 0 ? "bg-slate-50/50 dark:bg-white/[0.01]" : "bg-transparent")}>
-                          <td className="px-5 py-4 bg-slate-100/30 dark:bg-white/[0.01] text-xs font-black text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase tracking-tight">{v}</td>
+                          <td className="px-4 py-2 bg-slate-100/30 dark:bg-white/[0.01] text-[10px] font-semibold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase tracking-[0.04em]">{v}</td>
                           {Array.from({ length: fetusQty }).map((_, i) => {
                             const cellId = `${field.id}_${v.toLowerCase().replace(/[^a-z0-9]/g, '')}_f${i}`;
                             return (
                               <td key={i} className="px-1 py-1 border-r border-slate-200 dark:border-white/5">
                                 <input 
                                   type="text"
+                                  readOnly={readOnly}
                                   placeholder="--"
                                   value={formValues[cellId] || ''}
                                   onChange={(e) => setFieldValue(cellId, e.target.value)}
-                                  className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-3 placeholder:opacity-10"
+                                  className="w-full bg-white/50 dark:bg-slate-900/40 border-none text-center text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 ring-medical-primary/30 rounded-lg transition-all py-2 placeholder:opacity-20"
                                 />
                               </td>
                             );
@@ -606,79 +854,221 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({ field, sectionId, hideIco
           </div>
         );
       }
+      case 'nab-matrix': {
+        const rawQty = formValues['ep_fetus_qty'];
+        const fetusQty = Math.max(1, Math.min(12, parseInt(String(rawQty || '1'))));
+        const rows: string[] = Array.isArray(field.rows)
+          ? field.rows as string[]
+          : [
+              'LV', '4 Chamber / OT', 'Spine', 'Face', 'Ear', 'Stomach',
+              'Kidneys', 'Bladder', 'Limb Survey', 'Small Bowel', 'Large Bowel', 'PAMC'
+            ];
+
+        // 1-3 fetuses: split vertically into two columns of parameters
+        if (fetusQty < 4) {
+          const paramRows: string[][] = [];
+          for (let i = 0; i < rows.length; i += 2) {
+            paramRows.push(rows.slice(i, i + 2));
+          }
+
+          const paramWidth = fetusQty === 1 ? 'w-[35%]' : fetusQty === 2 ? 'w-[26%]' : 'w-[20%]';
+          const fetusWidth = fetusQty === 1 ? 'w-[15%]' : fetusQty === 2 ? 'w-[12%]' : 'w-[10%]';
+
+          return (
+            <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-medical-primary text-white">
+                      <th className={cn(paramWidth, "px-2 py-2 text-[9px] font-semibold uppercase tracking-wider border-r border-white/10")}>Parameter</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={`l-f${i}`} className={cn(fetusWidth, "px-0.5 py-2 text-[8px] font-semibold uppercase text-center border-r border-white/10 last:border-r-0 bg-white/10")}>
+                          F{String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                      <th className={cn(paramWidth, "px-2 py-2 text-[9px] font-semibold uppercase tracking-wider border-r border-white/10 border-l-2 border-l-medical-primary/30")}>Parameter</th>
+                      {Array.from({ length: fetusQty }).map((_, i) => (
+                        <th key={`r-f${i}`} className={cn(fetusWidth, "px-0.5 py-2 text-[8px] font-semibold uppercase text-center border-r border-white/10 last:border-r-0 bg-white/10")}>
+                          F{String.fromCharCode(65 + i)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                    {paramRows.map((row, idx) => (
+                      <tr key={idx} className={cn(idx % 2 !== 0 ? "bg-slate-50/50 dark:bg-white/[0.01]" : "bg-transparent")}>
+                        {row.map((param, colIdx) => (
+                          <React.Fragment key={param}>
+                            <td className={cn(
+                              "px-2 py-1.5 text-[9px] font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase leading-tight",
+                              colIdx === 1 && "border-l-2 border-l-medical-primary/30"
+                            )}>
+                              {param}
+                            </td>
+                            {Array.from({ length: fetusQty }).map((_, i) => {
+                              const cellId = `${field.id}_${param.replace(/[^a-z0-9]/gi, '').toLowerCase()}_f${i}`;
+                              return (
+                                <td key={`f${i}`} className="px-0.5 py-1 border-r border-slate-200 dark:border-white/5 text-center last:border-r-0">
+                                  <NabCell 
+                                    cellId={cellId} 
+                                    val={formValues[cellId] || 'N'} 
+                                    readOnly={readOnly}
+                                    onChange={(val) => setFieldValue(cellId, val)}
+                                  />
+                                </td>
+                              );
+                            })}
+                          </React.Fragment>
+                        ))}
+                        {row.length === 1 && (
+                          <>
+                            <td className="px-2 py-1.5 border-r border-slate-200 dark:border-white/5 border-l-2 border-l-medical-primary/30"></td>
+                            {Array.from({ length: fetusQty }).map((_, i) => (
+                              <td key={`empty-${i}`} className="px-0.5 py-1 border-r border-slate-200 dark:border-white/5 last:border-r-0"></td>
+                            ))}
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        }
+
+        // 4+ fetuses: standard wide table
+        return (
+          <div className="w-full rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white/80 dark:bg-slate-950/20 shadow-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-medical-primary text-white">
+                    <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider border-r border-white/10">Parameter</th>
+                    {Array.from({ length: fetusQty }).map((_, i) => (
+                      <th key={`f${i}`} className="px-2 py-2 text-[10px] font-semibold uppercase text-center border-l border-white/10 bg-white/10">
+                        Fetus {String.fromCharCode(65 + i)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                  {rows.map((rowLabel, rowIdx) => (
+                    <tr key={rowLabel} className={cn("hover:bg-medical-primary/5 transition-colors", rowIdx % 2 !== 0 ? "bg-slate-50/50 dark:bg-white/[0.01]" : "bg-transparent")}>
+                      <td className="px-4 py-2 bg-slate-100/30 dark:bg-white/[0.01] text-[10px] font-semibold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-white/5 uppercase tracking-[0.04em]">{rowLabel}</td>
+                      {Array.from({ length: fetusQty }).map((_, i) => {
+                        const cellId = `${field.id}_${rowLabel.replace(/[^a-z0-9]/gi, '').toLowerCase()}_f${i}`;
+                        return (
+                          <td key={`f${i}`} className="px-2 py-1 border-r border-slate-200 dark:border-white/5 text-center">
+                            <NabCell 
+                              cellId={cellId} 
+                              val={formValues[cellId] || 'N'} 
+                              readOnly={readOnly}
+                              onChange={(val) => setFieldValue(cellId, val)}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
       default:
+
         return <div className="p-3 bg-red-500/10 text-red-500 text-[10px] rounded-lg border border-red-500/20">Unsupported: {field.type}</div>;
     }
   };
+
+  const isWideField = ['nab-matrix', 'biometry-matrix', 'doppler-matrix', 'early-pregnancy-matrix', 'ob23-biometry', 'ob23_nab_matrix', 'checkbox-group'].includes(field.type);
 
   return (
     <motion.div 
       layout
       className={cn(
-        "relative group p-4 rounded-2xl flex items-center gap-4 border transition-all duration-300",
+        "relative group rounded-xl border transition-all duration-300",
+        isWideField ? "p-1.5 md:p-2 flex flex-col gap-1.5" : "p-2 md:p-3 flex items-center gap-3",
+        readOnly && "cursor-default",
         isSelected 
           ? "bg-medical-primary/[0.04] border-medical-primary shadow-lg ring-1 ring-medical-primary/20" 
           : "bg-white/50 dark:bg-slate-900/10 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:bg-slate-100 dark:hover:bg-white/[0.02]"
       )}
       onClick={(e) => {
         e.stopPropagation();
+        if (readOnly) {
+          return;
+        }
         setSelectedField(sectionId, field.id);
       }}
     >
-      {!hideIcon && (
-        <div className={cn(
-          "p-3 rounded-xl shrink-0 transition-all duration-300 shadow-sm",
-          isSelected 
-            ? "bg-medical-primary text-white dark:text-medical-dark shadow-neon-glow" 
-            : "bg-slate-100 dark:bg-white/5 text-slate-500 group-hover:bg-slate-200 dark:group-hover:bg-white/10"
-        )}>
-          {getTypeIcon(field.type)}
-        </div>
-      )}
-
-      <div className="flex-1 min-w-0">
-        {field.label && (
-          <div className="flex items-center justify-between mb-1.5 px-1 underline-offset-4 decoration-medical-primary/20">
-            <span className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-wider leading-tight group-hover:text-medical-primary transition-colors">
-              {field.label}
-            </span>
-            <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
-              {field.required ? 'REQUIRED' : 'OPTIONAL'}
-            </span>
+      {isWideField ? (
+        <>
+          {/* Wide field: label + delete on top row, table below */}
+          <div className="flex items-center justify-between px-1 min-h-[24px]">
+            {field.label ? (
+              <span className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.12em] leading-tight group-hover:text-medical-primary transition-colors">
+                {field.label}
+              </span>
+            ) : <span />}
+            <div className="flex items-center gap-1">
+              {field.required && <span className="text-sm font-bold leading-none text-rose-500 dark:text-rose-400">*</span>}
+              {!readOnly && canDeleteField && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeField(sectionId, field.id);
+                  }}
+                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded-lg text-slate-500 hover:text-red-400 transition-all"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
           </div>
-        )}
-        {renderInput()}
-      </div>
+          <div className="w-full">
+            {renderInput()}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex-1 min-w-0">
+            {field.label && (
+              <div className="flex items-center justify-between mb-1.5 px-1 underline-offset-4 decoration-medical-primary/20">
+                <span className="text-xs md:text-sm lg:text-xs font-black text-slate-800 dark:text-white uppercase tracking-[0.12em] leading-tight group-hover:text-medical-primary transition-colors">
+                  {field.label}
+                </span>
+                {field.required ? (
+                  <span className="text-sm font-bold leading-none text-rose-500 dark:text-rose-400">*</span>
+                ) : null}
+              </div>
+            )}
+            <div className="w-full">
+              {renderInput()}
+            </div>
+          </div>
 
-      {/* Action Column */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            removeField(sectionId, field.id);
-          }}
-          className="p-2 hover:bg-red-500/20 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
+          {/* Action Column */}
+          {!readOnly && canDeleteField && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeField(sectionId, field.id);
+                }}
+                className="p-2 hover:bg-red-500/20 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </motion.div>
   );
-};
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'text':
-    case 'textarea': return <Type size={14} />;
-    case 'number': return <Hash size={14} />;
-    case 'checkbox': return <CheckSquare size={14} />;
-    case 'dropdown': return <ChevronDown size={14} />;
-    case 'file': return <UploadCloud size={14} />;
-    case 'video': return <PlayCircle size={14} />;
-    case 'region-selector': return <Crosshair size={14} />;
-    case 'grid-matrix': return <Grid3X3 size={14} />;
-    default: return <Type size={14} />;
-  }
 };
 
 export default FieldRenderer;

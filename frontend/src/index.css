@@ -45,6 +45,31 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Ensure native form controls follow active theme, especially Windows select popups */
+select,
+input,
+textarea {
+  color: inherit;
+}
+
+select {
+  color-scheme: light;
+}
+
+.dark select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
 @layer components {
   .glass {
     @apply bg-medical-card backdrop-blur-xl border border-border-color shadow-2xl;
@@ -89,4 +114,132 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--medical-primary));
+}
+
+@media (max-width: 767px) {
+  .tablet-autoscale {
+    font-size: 16px;
+  }
+
+  .tablet-autoscale .builder-main-shell {
+    min-height: 0;
+  }
+
+  .tablet-autoscale .builder-canvas-shell {
+    border-left-width: 0;
+    border-right-width: 0;
+  }
+
+  .tablet-autoscale .builder-topbar {
+    min-height: auto;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .tablet-autoscale .builder-topbar-actions {
+    width: 100%;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .tablet-autoscale .builder-topbar-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tablet-autoscale .canvas-content {
+    max-width: 100vw;
+  }
+
+  .tablet-autoscale .canvas-content input,
+  .tablet-autoscale .canvas-content textarea,
+  .tablet-autoscale .canvas-content select {
+    font-size: 16px !important;
+    line-height: 1.35;
+  }
+
+  .tablet-autoscale .canvas-content table th,
+  .tablet-autoscale .canvas-content table td,
+  .tablet-autoscale .canvas-content table span {
+    font-size: 13px;
+  }
+
+  .tablet-autoscale .canvas-content table input,
+  .tablet-autoscale .canvas-content table textarea {
+    font-size: 14px !important;
+    font-weight: 600;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .tablet-autoscale {
+    font-size: 18px;
+  }
+
+  .tablet-autoscale .builder-main-shell {
+    min-height: 0;
+  }
+
+  .tablet-autoscale .builder-canvas-shell {
+    border-left-width: 0;
+    border-right-width: 0;
+  }
+
+  .tablet-autoscale .builder-topbar {
+    min-height: 5.5rem;
+  }
+
+  .tablet-autoscale .builder-topbar {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .tablet-autoscale .canvas-content {
+    max-width: min(98vw, 1200px);
+  }
+
+  .tablet-autoscale .canvas-content input,
+  .tablet-autoscale .canvas-content textarea,
+  .tablet-autoscale .canvas-content select {
+    font-size: 16px !important;
+    line-height: 1.35;
+  }
+
+  .tablet-autoscale .canvas-content table th,
+  .tablet-autoscale .canvas-content table td,
+  .tablet-autoscale .canvas-content table span {
+    font-size: 14px;
+  }
+
+  .tablet-autoscale .canvas-content table input,
+  .tablet-autoscale .canvas-content table textarea {
+    font-size: 15px !important;
+    font-weight: 600;
+  }
+
+  .tablet-autoscale .builder-topbar-actions {
+    scrollbar-width: thin;
+    padding-bottom: 0.25rem;
+    flex-wrap: wrap;
+    overflow: visible;
+    justify-content: flex-end;
+  }
+
+  .tablet-autoscale .builder-topbar-actions::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .tablet-autoscale .builder-topbar-actions::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.25);
+    border-radius: 999px;
+  }
+
+  .dark .tablet-autoscale .builder-topbar-actions::-webkit-scrollbar-thumb {
+    background: rgba(248, 250, 252, 0.22);
+  }
 }

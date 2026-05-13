@@ -20,6 +20,7 @@ router.post('/', async (req, res) => {
       country,
       aadhar_number,
       email,
+      trimester,
       created_by,
     } = req.body as {
       pid?: string;
@@ -35,13 +36,14 @@ router.post('/', async (req, res) => {
       country?: string;
       aadhar_number?: string;
       email?: string;
+      trimester?: string;
       created_by?: string;
     };
     const requestUser = getRequestUser(req);
 
-    if (!hasAllowedRole(requestUser.role, ['receptionist', 'admin'])) {
+    if (!hasAllowedRole(requestUser.role, ['doctor', 'typist', 'receptionist', 'admin'])) {
       return res.status(403).json({
-        message: 'Only receptionist or admin can create patients',
+        message: 'Only doctor, typist, receptionist or admin can create patients',
       });
     }
 
@@ -49,6 +51,8 @@ router.post('/', async (req, res) => {
     const maritalStatus = marital_status ?? martial_status;
     const parsedAge = typeof age === 'string' ? Number(age) : age;
     const parsedDob = dob ? new Date(dob) : null;
+    const patientTrimester = trimester || 'Early pregnancy';
+    
     const requiredFields = [
       pid,
       name,
@@ -60,6 +64,7 @@ router.post('/', async (req, res) => {
       country,
       aadhar_number,
       email,
+      patientTrimester,
       creatorId,
     ];
 
@@ -111,6 +116,8 @@ router.post('/', async (req, res) => {
         country: patientCountry,
         aadhar_number: patientAadhar,
         email: patientEmail,
+        trimester: patientTrimester,
+        scan_type: null,
         created_by: creatorUserId,
       },
     });

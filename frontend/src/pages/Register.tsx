@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Mail, Lock, User, Phone, Building, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Heart, Mail, Lock, User, Phone, Building, ChevronRight, Eye, EyeOff, CheckCircle, Clock } from 'lucide-react';
 import { USER_ROLES, UserRole, saveSession } from '../auth';
 import { registerUser } from '../api/auth';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
+  const [pendingUserEmail, setPendingUserEmail] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -61,15 +63,26 @@ const Register: React.FC = () => {
 
     setLoading(true);
     try {
-      const session = await registerUser({
+      const response = await registerUser({
         name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         email: formData.email,
         password: formData.password,
         role: formData.role,
       });
 
-      saveSession(session);
-      navigate('/dashboard');
+      // Check if registration requires approval
+      if ('requiresApproval' in response && response.requiresApproval) {
+        setPendingUserEmail(formData.email);
+        setIsPendingApproval(true);
+        // Save pending registration info to localStorage for reference
+        localStorage.setItem('pending_registration_email', formData.email);
+        localStorage.setItem('pending_registration_role', formData.role);
+      } else {
+        // User is approved (admin), proceed with login
+        const session = response as any;
+        saveSession(session);
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       setErrors({
@@ -94,7 +107,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
@@ -116,13 +129,77 @@ const Register: React.FC = () => {
             </span>
           </Link>
           <h1 className="text-4xl font-bold mb-2">Create Account</h1>
-          <p className="text-slate-400">Select your role and create a secure account</p>
+          <p className="text-slate-500 dark:text-slate-400">Select your role and create a secure account</p>
         </motion.div>
 
         <motion.div
           variants={itemVariants}
-          className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm"
+          className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-8 backdrop-blur-sm"
         >
+          {isPendingApproval ? (
+            <div className="text-center py-8">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="flex justify-center mb-6"
+              >
+                <Clock size={64} className="text-yellow-400" />
+              </motion.div>
+              
+              <h2 className="text-2xl font-bold mb-4 text-white">Registration Pending</h2>
+              
+              <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-4 mb-6">
+                <p className="text-yellow-400 text-sm mb-3">
+                  Your registration has been submitted successfully!
+                </p>
+                <p className="text-slate-300 text-sm">
+                  An administrator will review your application and send you an email once your account is approved. This typically happens within 24 hours.
+                </p>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4 mb-6 text-left">
+                <p className="text-slate-400 text-sm mb-2"><strong>Email:</strong></p>
+                <p className="text-white text-sm font-mono break-all">{pendingUserEmail}</p>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-slate-400 text-sm">
+                  You'll be able to log in with your credentials once your account is approved.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/login')}
+                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-200"
+                >
+                  Go to Login
+                </motion.button>
+                
+                <button
+                  onClick={() => {
+                    setIsPendingApproval(false);
+                    setPendingUserEmail('');
+                    setFormData({
+                      firstName: '',
+                      lastName: '',
+                      email: '',
+                      phone: '',
+                      organization: '',
+                      role: 'doctor',
+                      password: '',
+                      confirmPassword: '',
+                      agreeToTerms: false,
+                    });
+                    setErrors({});
+                  }}
+                  className="w-full py-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg font-semibold transition-all duration-200 text-slate-300"
+                >
+                  Register Another Account
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
           {errors.submit && (
             <motion.div
               variants={itemVariants}
@@ -173,10 +250,10 @@ const Register: React.FC = () => {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
               >
                 {USER_ROLES.map((role) => (
-                  <option key={role} value={role} className="bg-slate-900">
+                  <option key={role} value={role} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
                     {role}
                   </option>
                 ))}
@@ -311,6 +388,8 @@ const Register: React.FC = () => {
               Sign In
             </Link>
           </motion.p>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </div>

@@ -8,18 +8,23 @@ datasource db {
 }
 
 model User {
-  user_id    String        @id @default(uuid())
-  name       String
-  role       String
-  email      String        @unique
+  user_id       String        @id @default(uuid())
+  name          String
+  role          String
+  email         String        @unique
   password_hash String?
-  created_at DateTime      @default(now())
-  updated_at DateTime      @updatedAt
-  patients   Patient[]     @relation("PatientCreator")
-  templates  FormTemplate[]
-  events     ScanEvent[]
+  is_approved   Boolean       @default(false)
+  approver_id   String?
+  approved_at   DateTime?
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  patients      Patient[]     @relation("PatientCreator")
+  templates     FormTemplate[]
+  events        ScanEvent[]
   created_events ScanEvent[] @relation("ScanEventCreator")
   edited_scan_history ScanEventHistory[] @relation("ScanEventHistoryEditor")
+  approved_users User[] @relation("UserApprover")
+  approver      User? @relation("UserApprover", fields: [approver_id], references: [user_id], onDelete: SetNull)
 }
 
 model Patient {
@@ -36,6 +41,8 @@ model Patient {
   country    String
   aadhar_number String
   email      String
+  trimester  String       @default("Early pregnancy")
+  scan_type  String?
   created_by String
   created_at DateTime     @default(now())
   updated_at DateTime     @updatedAt
@@ -69,6 +76,8 @@ model FormField {
   field_type   String
   is_required  Boolean      @default(false)
   sort_order   Int          @default(0)
+  options_json Json?
+  conditional_json Json?
   created_at   DateTime     @default(now())
   updated_at   DateTime     @updatedAt
   template     FormTemplate @relation(fields: [template_id], references: [template_id], onDelete: Cascade)
@@ -83,7 +92,9 @@ model ScanEvent {
   patient_id  String
   doctor_id   String
   created_by  String?
-  template_id String
+  template_id String?
+  scan_type   String?
+  visit_date  DateTime
   status      String           @default("draft")
   notes       String?
   created_at  DateTime         @default(now())
@@ -91,7 +102,7 @@ model ScanEvent {
   patient     Patient          @relation(fields: [patient_id], references: [patient_id], onDelete: Cascade)
   doctor      User             @relation(fields: [doctor_id], references: [user_id], onDelete: Restrict)
   creator     User?            @relation("ScanEventCreator", fields: [created_by], references: [user_id], onDelete: SetNull)
-  template    FormTemplate     @relation(fields: [template_id], references: [template_id], onDelete: Restrict)
+  template    FormTemplate?    @relation(fields: [template_id], references: [template_id], onDelete: SetNull)
   data        ScanEventData?
   history     ScanEventHistory[]
   values      ScanFieldValue[]
