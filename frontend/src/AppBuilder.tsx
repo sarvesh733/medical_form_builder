@@ -582,12 +582,28 @@ const AppBuilder: React.FC = () => {
 
         <main className="builder-main-shell flex flex-1 min-h-0 overflow-hidden">
           {!activeTemplate ? (
-            <Dashboard onNew={(template) => {
-              useStore.setState((state) => ({
-                activeTemplate: template,
-                templates: [template, ...state.templates.filter((t) => t.id !== template.id)],
-              }));
-            }} />
+            hasEventContext ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-medical-dark transition-colors duration-300">
+                <div className="relative flex flex-col items-center max-w-sm text-center">
+                  {/* Premium Glowing Loader */}
+                  <div className="relative w-16 h-16 mb-6">
+                    <div className="absolute inset-0 rounded-full border-4 border-medical-primary/20 animate-pulse" />
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-medical-primary border-r-medical-primary animate-spin" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-2">Loading Clinical Form</h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-relaxed">
+                    Preparing medical templates & data...
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <Dashboard onNew={(template) => {
+                useStore.setState((state) => ({
+                  activeTemplate: template,
+                  templates: [template, ...state.templates.filter((t) => t.id !== template.id)],
+                }));
+              }} />
+            )
           ) : (
             <>
               {!isTemplateLocked && <Sidebar className="hidden lg:flex" />}
