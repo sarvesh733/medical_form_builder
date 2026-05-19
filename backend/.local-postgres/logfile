@@ -1660,4 +1660,131 @@
 2026-05-13 17:23:11.582 IST [26576] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
 2026-05-13 17:23:11.582 IST [26576] LOG:  terminating any other active server processes
 2026-05-13 17:23:11.603 IST [26576] LOG:  received fast shutdown request
+^C2026-05-13 17:33:00.350 IST [10248] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-13 17:33:00.355 IST [10248] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-13 17:33:00.356 IST [10248] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-13 17:33:00.466 IST [17580] LOG:  database system was interrupted; last known up at 2026-05-13 17:03:27 IST
+2026-05-13 17:33:03.837 IST [10268] FATAL:  the database system is starting up
+2026-05-13 17:33:03.883 IST [16720] FATAL:  the database system is starting up
+2026-05-13 17:33:09.720 IST [17580] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-13 17:33:09.735 IST [17580] LOG:  redo starts at 0/7BE2838
+2026-05-13 17:33:09.735 IST [17580] LOG:  invalid record length at 0/7BE2870: expected at least 24, got 0
+2026-05-13 17:33:09.735 IST [17580] LOG:  redo done at 0/7BE2838 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-13 17:33:09.751 IST [15636] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-13 17:33:09.834 IST [15636] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.025 s, total=0.094 s; sync files=2, longest=0.013 s, average=0.013 s; distance=0 kB, estimate=0 kB; lsn=0/7BE2870, redo lsn=0/7BE2870
+2026-05-13 17:33:09.888 IST [10248] LOG:  database system is ready to accept connections
+2026-05-13 17:33:15.022 IST [22380] LOG:  could not receive data from client: An established connection was aborted by the software in your host machine.
+	
+2026-05-13 17:33:15.166 IST [11960] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-13 17:53:09.856 IST [15636] LOG:  checkpoint starting: time
+2026-05-13 17:53:10.851 IST [15636] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.814 s, sync=0.094 s, total=0.995 s; sync files=8, longest=0.018 s, average=0.012 s; distance=16 kB, estimate=16 kB; lsn=0/7BE68F0, redo lsn=0/7BE68B8
+2026-05-14 10:20:49.466 IST [15856] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-14 10:20:49.473 IST [15856] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-14 10:20:49.473 IST [15856] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-14 10:20:49.598 IST [2928] LOG:  database system was interrupted; last known up at 2026-05-13 17:53:10 IST
+2026-05-14 10:20:59.624 IST [2928] LOG:  syncing data directory (fsync), elapsed time: 10.02 s, current path: ./base/4/2604
+2026-05-14 10:21:02.274 IST [2308] FATAL:  the database system is starting up
+2026-05-14 10:21:02.320 IST [4524] FATAL:  the database system is starting up
+2026-05-14 10:21:07.364 IST [2928] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-14 10:21:07.460 IST [2928] LOG:  redo starts at 0/7BE68B8
+2026-05-14 10:21:07.460 IST [2928] LOG:  invalid record length at 0/7BE69A0: expected at least 24, got 0
+2026-05-14 10:21:07.460 IST [2928] LOG:  redo done at 0/7BE6968 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-14 10:21:07.481 IST [17480] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-14 10:21:07.606 IST [17480] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.007 s, sync=0.025 s, total=0.140 s; sync files=2, longest=0.013 s, average=0.013 s; distance=0 kB, estimate=0 kB; lsn=0/7BE69A0, redo lsn=0/7BE69A0
+2026-05-14 10:21:07.669 IST [15856] LOG:  database system is ready to accept connections
+2026-05-14 10:21:29.524 IST [15676] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 10:21:29.685 IST [15224] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 10:22:00.192 IST [6924] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 10:22:30.079 IST [15856] LOG:  background worker "logical replication launcher" (PID 7084) was terminated by exception 0xC000013A
+2026-05-14 10:22:30.079 IST [15856] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-05-14 10:22:30.079 IST [15856] LOG:  terminating any other active server processes
+2026-05-14 10:22:30.095 IST [15856] LOG:  all server processes terminated; reinitializing
+^C2026-05-14 10:23:55.112 IST [10112] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-14 10:23:55.117 IST [10112] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-14 10:23:55.117 IST [10112] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-14 10:23:55.245 IST [19964] LOG:  database system was interrupted; last known up at 2026-05-14 10:21:07 IST
+2026-05-14 10:23:56.052 IST [19964] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-14 10:23:56.072 IST [19964] LOG:  redo starts at 0/7BE6A18
+2026-05-14 10:23:56.072 IST [19964] LOG:  invalid record length at 0/7BE6A50: expected at least 24, got 0
+2026-05-14 10:23:56.072 IST [19964] LOG:  redo done at 0/7BE6A18 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-14 10:23:56.095 IST [7188] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-14 10:23:56.211 IST [7188] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.023 s, total=0.133 s; sync files=2, longest=0.013 s, average=0.012 s; distance=0 kB, estimate=0 kB; lsn=0/7BE6A50, redo lsn=0/7BE6A50
+2026-05-14 10:23:56.261 IST [10112] LOG:  database system is ready to accept connections
+2026-05-14 10:24:10.436 IST [10936] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 15:38:30.967 IST [7188] LOG:  checkpoint starting: time
+2026-05-14 15:38:32.060 IST [7188] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.926 s, sync=0.098 s, total=1.094 s; sync files=9, longest=0.017 s, average=0.011 s; distance=20 kB, estimate=20 kB; lsn=0/7BEBCC8, redo lsn=0/7BEBC90
+2026-05-14 18:44:53.127 IST [25360] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 18:44:53.127 IST [18240] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 18:44:53.127 IST [24680] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-14 18:44:53.305 IST [10112] LOG:  background worker "logical replication launcher" (PID 6616) was terminated by exception 0xC000013A
+2026-05-14 18:44:53.305 IST [10112] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-05-14 18:44:53.305 IST [10112] LOG:  terminating any other active server processes
+2026-05-14 18:44:53.350 IST [10112] LOG:  all server processes terminated; reinitializing
+2026-05-15 16:51:41.153 IST [18416] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-15 16:51:41.159 IST [18416] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-15 16:51:41.159 IST [18416] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-15 16:51:41.431 IST [10896] LOG:  database system was interrupted; last known up at 2026-05-14 15:38:32 IST
+2026-05-15 16:51:51.442 IST [10896] LOG:  syncing data directory (fsync), elapsed time: 10.00 s, current path: ./base/4/3456
+2026-05-15 16:51:57.494 IST [10896] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-15 16:51:57.535 IST [10896] LOG:  redo starts at 0/7BEBC90
+2026-05-15 16:51:57.536 IST [10896] LOG:  invalid record length at 0/7BEBD78: expected at least 24, got 0
+2026-05-15 16:51:57.536 IST [10896] LOG:  redo done at 0/7BEBD40 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-15 16:51:57.558 IST [25096] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-15 16:51:57.641 IST [25096] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.027 s, total=0.100 s; sync files=2, longest=0.015 s, average=0.014 s; distance=0 kB, estimate=0 kB; lsn=0/7BEBD78, redo lsn=0/7BEBD78
+2026-05-15 16:51:57.674 IST [18416] LOG:  database system is ready to accept connections
+2026-05-15 16:52:07.368 IST [27772] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-15 18:26:21.536 IST [18416] LOG:  background worker "logical replication launcher" (PID 15968) was terminated by exception 0xC000013A
+2026-05-15 18:26:21.536 IST [18416] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-05-15 18:26:21.545 IST [18416] LOG:  terminating any other active server processes
+2026-05-15 18:26:21.564 IST [18416] LOG:  received fast shutdown request
+2026-05-18 16:57:57.211 IST [13392] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-18 16:57:57.216 IST [13392] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-18 16:57:57.216 IST [13392] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-18 16:57:57.352 IST [25848] LOG:  database system was interrupted; last known up at 2026-05-15 16:51:57 IST
+2026-05-18 16:58:07.370 IST [25848] LOG:  syncing data directory (fsync), elapsed time: 10.01 s, current path: ./base/5/2605_fsm
+2026-05-18 16:58:09.698 IST [25848] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-18 16:58:09.743 IST [25848] LOG:  redo starts at 0/7BEBDF0
+2026-05-18 16:58:09.743 IST [25848] LOG:  invalid record length at 0/7BEBE28: expected at least 24, got 0
+2026-05-18 16:58:09.743 IST [25848] LOG:  redo done at 0/7BEBDF0 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-18 16:58:09.766 IST [12968] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-18 16:58:09.858 IST [12968] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.024 s, total=0.109 s; sync files=2, longest=0.013 s, average=0.012 s; distance=0 kB, estimate=0 kB; lsn=0/7BEBE28, redo lsn=0/7BEBE28
+2026-05-18 16:58:09.905 IST [13392] LOG:  database system is ready to accept connections
+2026-05-18 16:58:49.339 IST [10352] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-18 17:23:09.840 IST [12968] LOG:  checkpoint starting: time
+2026-05-18 17:23:10.783 IST [12968] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.772 s, sync=0.086 s, total=0.943 s; sync files=8, longest=0.017 s, average=0.011 s; distance=22 kB, estimate=22 kB; lsn=0/7BF1668, redo lsn=0/7BF1630
+2026-05-18 18:52:32.801 IST [13392] LOG:  server process (PID 26360) was terminated by exception 0xC000013A
+2026-05-18 18:52:32.801 IST [13392] DETAIL:  Failed process was running: SELECT "public"."Patient"."patient_id", "public"."Patient"."pid", "public"."Patient"."name", "public"."Patient"."phone", "public"."Patient"."address", "public"."Patient"."age", "public"."Patient"."dob", "public"."Patient"."marital_status", "public"."Patient"."gender", "public"."Patient"."state", "public"."Patient"."country", "public"."Patient"."aadhar_number", "public"."Patient"."email", "public"."Patient"."trimester", "public"."Patient"."scan_type", "public"."Patient"."created_by", "public"."Patient"."created_at", "public"."Patient"."updated_at" FROM "public"."Patient" WHERE 1=1 ORDER BY "public"."Patient"."created_at" DESC OFFSET $1
+2026-05-18 18:52:32.801 IST [13392] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-05-18 18:52:32.811 IST [13392] LOG:  terminating any other active server processes
+2026-05-18 18:52:32.820 IST [9644] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-18 18:52:32.998 IST [13392] LOG:  received fast shutdown request
+^C2026-05-19 09:51:28.694 IST [18496] LOG:  starting PostgreSQL 16.13, compiled by Visual C++ build 1944, 64-bit
+2026-05-19 09:51:28.703 IST [18496] LOG:  listening on IPv6 address "::1", port 5433
+2026-05-19 09:51:28.703 IST [18496] LOG:  listening on IPv4 address "127.0.0.1", port 5433
+2026-05-19 09:51:28.891 IST [12944] LOG:  database system was interrupted; last known up at 2026-05-18 17:23:10 IST
+2026-05-19 09:51:38.920 IST [12944] LOG:  syncing data directory (fsync), elapsed time: 10.02 s, current path: ./base/4/2613
+2026-05-19 09:51:43.932 IST [12944] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-05-19 09:51:43.971 IST [12944] LOG:  redo starts at 0/7BF1630
+2026-05-19 09:51:43.971 IST [12944] LOG:  invalid record length at 0/7BF1718: expected at least 24, got 0
+2026-05-19 09:51:43.971 IST [12944] LOG:  redo done at 0/7BF16E0 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-05-19 09:51:43.986 IST [30336] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-05-19 09:51:44.078 IST [30336] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.026 s, total=0.102 s; sync files=2, longest=0.014 s, average=0.013 s; distance=0 kB, estimate=0 kB; lsn=0/7BF1718, redo lsn=0/7BF1718
+2026-05-19 09:51:44.136 IST [18496] LOG:  database system is ready to accept connections
+2026-05-19 09:51:48.935 IST [12424] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-05-19 12:18:17.761 IST [18496] LOG:  background worker "logical replication launcher" (PID 28836) was terminated by exception 0xC000013A
+2026-05-19 12:18:17.761 IST [18496] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-05-19 12:18:17.763 IST [18496] LOG:  terminating any other active server processes
+2026-05-19 12:18:17.793 IST [18496] LOG:  all server processes terminated; reinitializing
 ^C

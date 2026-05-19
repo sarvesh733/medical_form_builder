@@ -107,11 +107,21 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4 relative">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
       </div>
+
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        onClick={() => navigate('/')}
+        className="absolute top-8 left-8 z-50 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+      >
+        <ArrowLeft size={20} />
+        <span className="font-semibold">Back to Home</span>
+      </motion.button>
 
       <motion.div
         className="relative z-10 w-full max-w-md"
@@ -119,15 +129,6 @@ const Login: React.FC = () => {
         initial="hidden"
         animate="visible"
       >
-        <motion.button
-          variants={itemVariants}
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mb-6 transition-colors"
-        >
-          <ArrowLeft size={20} />
-          Back to Home
-        </motion.button>
-
         <motion.div variants={itemVariants} className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
             <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">

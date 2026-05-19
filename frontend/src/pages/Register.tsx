@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Mail, Lock, User, Phone, Building, ChevronRight, Eye, EyeOff, CheckCircle, Clock } from 'lucide-react';
+import { Heart, Mail, Lock, User, Phone, Building, ChevronRight, Eye, EyeOff, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 import { USER_ROLES, UserRole, saveSession } from '../auth';
 import { registerUser } from '../api/auth';
 
@@ -107,11 +107,21 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white flex items-center justify-center p-4 relative">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[120px]" />
       </div>
+
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        onClick={() => navigate('/')}
+        className="absolute top-8 left-8 z-50 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+      >
+        <ArrowLeft size={20} />
+        <span className="font-semibold">Back to Home</span>
+      </motion.button>
 
       <motion.div
         className="relative z-10 w-full max-w-lg"
@@ -145,9 +155,9 @@ const Register: React.FC = () => {
               >
                 <Clock size={64} className="text-yellow-400" />
               </motion.div>
-              
+
               <h2 className="text-2xl font-bold mb-4 text-white">Registration Pending</h2>
-              
+
               <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-4 mb-6">
                 <p className="text-yellow-400 text-sm mb-3">
                   Your registration has been submitted successfully!
@@ -174,7 +184,7 @@ const Register: React.FC = () => {
                 >
                   Go to Login
                 </motion.button>
-                
+
                 <button
                   onClick={() => {
                     setIsPendingApproval(false);
@@ -200,194 +210,194 @@ const Register: React.FC = () => {
             </div>
           ) : (
             <>
-          {errors.submit && (
-            <motion.div
-              variants={itemVariants}
-              className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm"
-            >
-              {errors.submit}
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium mb-2">First Name *</label>
-                <div className="relative">
-                  <User size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    placeholder="John"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                  />
-                </div>
-                {errors.firstName && <p className="text-red-400 text-sm mt-1">{errors.firstName}</p>}
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium mb-2">Last Name *</label>
-                <div className="relative">
-                  <User size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    placeholder="Doe"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                  />
-                </div>
-                {errors.lastName && <p className="text-red-400 text-sm mt-1">{errors.lastName}</p>}
-              </motion.div>
-            </div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium mb-2">Role *</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
-              >
-                {USER_ROLES.map((role) => (
-                  <option key={role} value={role} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-                    {role}
-                  </option>
-                ))}
-              </select>
-              {errors.role && <p className="text-red-400 text-sm mt-1">{errors.role}</p>}
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium mb-2">Email Address *</label>
-              <div className="relative">
-                <Mail size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="john@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                />
-              </div>
-              {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
-            </motion.div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium mb-2">Phone Number</label>
-                <div className="relative">
-                  <Phone size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <label className="block text-sm font-medium mb-2">Organization</label>
-                <div className="relative">
-                  <Building size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    name="organization"
-                    value={formData.organization}
-                    onChange={handleChange}
-                    placeholder="Hospital/Clinic"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                  />
-                </div>
-              </motion.div>
-            </div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium mb-2">Password *</label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="At least 8 characters"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-slate-500 hover:text-slate-300"
+              {errors.submit && (
+                <motion.div
+                  variants={itemVariants}
+                  className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-medium mb-2">Confirm Password *</label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-3 top-3.5 text-slate-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-800/50 border border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors"
-                />
-              </div>
-              {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                name="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onChange={handleChange}
-                className="mt-1 w-4 h-4 rounded border-white/20 bg-slate-800/50 cursor-pointer"
-              />
-              <label className="text-sm text-slate-400 cursor-pointer">
-                I agree to the terms and privacy policy.
-              </label>
-            </motion.div>
-            {errors.agreeToTerms && <p className="text-red-400 text-sm">{errors.agreeToTerms}</p>}
-
-            <motion.button
-              variants={itemVariants}
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                <>
-                  Create Account
-                  <ChevronRight size={20} />
-                </>
+                  {errors.submit}
+                </motion.div>
               )}
-            </motion.button>
-          </form>
 
-          <motion.p variants={itemVariants} className="text-center mt-6 text-slate-400">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-400 hover:text-cyan-400 font-semibold">
-              Sign In
-            </Link>
-          </motion.p>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium mb-2">First Name *</label>
+                    <div className="relative">
+                      <User size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        placeholder="John"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    {errors.firstName && <p className="text-red-400 text-sm mt-1">{errors.firstName}</p>}
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium mb-2">Last Name *</label>
+                    <div className="relative">
+                      <User size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        placeholder="Doe"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    {errors.lastName && <p className="text-red-400 text-sm mt-1">{errors.lastName}</p>}
+                  </motion.div>
+                </div>
+
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-medium mb-2">Role *</label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-300 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                  >
+                    {USER_ROLES.map((role) => (
+                      <option key={role} value={role} className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.role && <p className="text-red-400 text-sm mt-1">{errors.role}</p>}
+                </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-medium mb-2">Email Address *</label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="john@example.com"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                </motion.div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium mb-2">Phone Number</label>
+                    <div className="relative">
+                      <Phone size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="+1 (555) 000-0000"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium mb-2">Organization</label>
+                    <div className="relative">
+                      <Building size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                      <input
+                        type="text"
+                        name="organization"
+                        value={formData.organization}
+                        onChange={handleChange}
+                        placeholder="Hospital/Clinic"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-medium mb-2">Password *</label>
+                  <div className="relative">
+                    <Lock size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="At least 8 characters"
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3.5 text-slate-500 hover:text-slate-300"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+                </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-medium mb-2">Confirm Password *</label>
+                  <div className="relative">
+                    <Lock size={18} className="absolute left-3 top-3.5 text-slate-500" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm your password"
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 rounded-lg focus:border-blue-500/50 focus:outline-none transition-colors text-slate-900 dark:text-white"
+                    />
+                  </div>
+                  {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleChange}
+                    className="mt-1 w-4 h-4 rounded border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-slate-800/50 cursor-pointer"
+                  />
+                  <label className="text-sm text-slate-400 cursor-pointer">
+                    I agree to the terms and privacy policy.
+                  </label>
+                </motion.div>
+                {errors.agreeToTerms && <p className="text-red-400 text-sm">{errors.agreeToTerms}</p>}
+
+                <motion.button
+                  variants={itemVariants}
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    <>
+                      Create Account
+                      <ChevronRight size={20} />
+                    </>
+                  )}
+                </motion.button>
+              </form>
+
+              <motion.p variants={itemVariants} className="text-center mt-6 text-slate-400">
+                Already have an account?{' '}
+                <Link to="/login" className="text-blue-400 hover:text-cyan-400 font-semibold">
+                  Sign In
+                </Link>
+              </motion.p>
             </>
           )}
         </motion.div>

@@ -81,7 +81,7 @@ const Dashboard: React.FC = () => {
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [isPatientListOpen, setIsPatientListOpen] = useState(false);
 
-  const canCreatePatient = user?.role === 'doctor' || user?.role === 'typist' || user?.role === 'receptionist' || user?.role === 'admin';
+  const canCreatePatient = user?.role === 'receptionist' || user?.role === 'admin';
   const canViewPatients = user?.role === 'doctor' || user?.role === 'typist' || user?.role === 'receptionist' || user?.role === 'admin';
   const canOpenBuilder = user?.role === 'doctor' || user?.role === 'typist' || user?.role === 'admin';
   const canCreateScanEvent = user?.role === 'doctor' || user?.role === 'typist' || user?.role === 'admin';
@@ -391,57 +391,56 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-6 md:p-10 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 p-4 sm:p-6 md:p-10 transition-colors">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/80 p-6 md:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight">{user.role} Dashboard</h1>
-              <p className="text-slate-600 dark:text-slate-300 mt-2">{user.name} ({user.email})</p>
-              {/* <p className="text-slate-500 dark:text-slate-400 mt-3">{roleDescription}</p> */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight truncate">{user.role} Dashboard</h1>
+              <p className="text-slate-600 dark:text-slate-300 mt-1 text-sm md:text-base truncate">{user.name} ({user.email})</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <div className="mr-1 flex items-center">
                 <ThemeToggle />
               </div>
               {canOpenBuilder && (
                 <button
                   onClick={() => navigate('/builder')}
-                  className="px-4 py-2 rounded-lg bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-400"
+                  className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-400 text-sm sm:text-base"
                 >
                   Open Builder
                 </button>
               )}
               {canCreatePatient && (
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate('/register-patient?mode=existing')}
-                    className="px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-400"
-                  >
-                    Add Scan (Existing)
-                  </button>
-                  <button
-                    onClick={() => navigate('/register-patient')}
-                    className="px-4 py-2 rounded-lg bg-emerald-500 text-slate-900 font-semibold hover:bg-emerald-400"
-                  >
-                    Register Patient
-                  </button>
+                    <button
+                      onClick={() => navigate('/register-patient?mode=existing')}
+                      className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-400 text-sm sm:text-base"
+                    >
+                      Add Scan (Existing)
+                    </button>
+                    <button
+                      onClick={() => navigate('/register-patient')}
+                      className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-emerald-500 text-slate-900 font-semibold hover:bg-emerald-400 text-sm sm:text-base"
+                    >
+                      Register Patient
+                    </button>
                 </div>
               )}
               {user?.role === 'admin' && (
-                <button
-                  onClick={() => navigate('/admin/users')}
-                  className="px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-semibold hover:bg-amber-400"
-                >
-                  Manage Users
-                </button>
+                  <button
+                    onClick={() => navigate('/admin/users')}
+                    className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg bg-amber-500 text-slate-900 font-semibold hover:bg-amber-400 text-sm sm:text-base"
+                  >
+                    Manage Users
+                  </button>
               )}
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800"
-              >
-                Logout
-              </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 text-sm sm:text-base font-semibold"
+                >
+                  Logout
+                </button>
             </div>
           </div>
         </div>

@@ -236,7 +236,7 @@ const resolveTemplateFromScanType = async (scanType: string | undefined): Promis
     // Fetch ALL templates for this scan_type across all doctors
     console.log(`[resolveTemplate] Fetching all templates for scan_type: ${scanType}`);
     const response = await fetch(
-      `http://localhost:5000/templates?scan_type=${encodeURIComponent(scanType)}&all_for_scantype=true`,
+      `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/templates?scan_type=${encodeURIComponent(scanType)}&all_for_scantype=true`,
       {
         headers: {
           'x-user-id': currentUser?.user_id || '',

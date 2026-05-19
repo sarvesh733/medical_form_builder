@@ -106,7 +106,7 @@ const App: React.FC = () => {
         <Route
           path="/register-patient"
           element={
-            <RequireRole allowed={['doctor', 'typist', 'receptionist', 'admin']}>
+            <RequireRole allowed={['receptionist', 'admin']}>
               <ReceptionistRegistration />
             </RequireRole>
           }

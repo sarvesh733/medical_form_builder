@@ -37,7 +37,7 @@ export type CreatePatientPayload = {
   trimester: string;
 };
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const DEFAULT_CREATOR_ID = 'SYSTEM';
 
 export const createPatient = async (payload: CreatePatientPayload, createdBy?: string): Promise<Patient> => {

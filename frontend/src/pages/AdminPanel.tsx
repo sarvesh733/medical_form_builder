@@ -41,7 +41,7 @@ const AdminPanel: React.FC = () => {
     try {
       setError(null);
       
-      const response = await fetch('http://localhost:5000/auth/pending-users', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth/pending-users`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.token}`,
@@ -69,7 +69,7 @@ const AdminPanel: React.FC = () => {
     try {
       setError(null);
 
-      const response = await fetch('http://localhost:5000/auth/all-users', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth/all-users`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.token}`,
@@ -116,7 +116,7 @@ const AdminPanel: React.FC = () => {
       setActionLoading(userId);
       setError(null);
 
-      const response = await fetch(`http://localhost:5000/auth/users/${userId}/approve`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth/users/${userId}/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.token}`,
@@ -152,7 +152,7 @@ const AdminPanel: React.FC = () => {
       setActionLoading(userId);
       setError(null);
 
-      const response = await fetch(`http://localhost:5000/auth/users/${userId}/reject`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth/users/${userId}/reject`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.token}`,
@@ -188,7 +188,7 @@ const AdminPanel: React.FC = () => {
       setActionLoading(userId);
       setError(null);
 
-      const response = await fetch(`http://localhost:5000/auth/users/${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session?.token}`,

@@ -51,7 +51,7 @@ const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white overflow-hidden transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 text-slate-900 dark:text-white overflow-hidden transition-colors px-4 sm:px-6 md:px-12">
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-sky-400/20 dark:bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
@@ -60,7 +60,7 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 border-b border-slate-200/90 dark:border-white/10 backdrop-blur-sm">
+      <nav className="relative z-10 flex items-center justify-between px-4 py-4 sm:px-6 md:px-12 md:py-6 border-b border-slate-200/90 dark:border-white/10 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
             <Heart size={24} className="text-white" />
@@ -88,7 +88,7 @@ const LandingPage: React.FC = () => {
 
       {/* Hero Section */}
       <motion.section
-        className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 py-20 md:py-32"
+        className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 md:px-12 py-16 md:py-32"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

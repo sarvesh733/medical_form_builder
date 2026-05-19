@@ -1,0 +1,51 @@
+# Executive Summary: Mediscan Form Builder
+
+The **Mediscan Form Builder** is a specialized, high-performance clinical data management system designed to streamline the workflow of diagnostic centers. It replaces rigid, one-size-fits-all medical forms with a dynamic, **schema-driven architecture** that adapts to the specific needs of doctors and patients.
+
+---
+
+### 🏗️ System Design & Architecture
+The platform is built on a **Schema-Driven UI** pattern, ensuring that clinical protocols are not hardcoded but are instead defined by flexible JSON templates.
+
+*   **Modular Backend**: A Node.js ecosystem utilizing **Prisma ORM** for type-safe database interactions with a **PostgreSQL** foundation.
+*   **State-of-the-Art State Management**: Uses **Zustand** for high-performance, real-time synchronization between the form builder and clinical data entry.
+*   **Intelligent Template Engine**: Automatically resolves the correct clinical protocol based on patient metadata (e.g., scan type and trimester).
+*   **Conditional Logic Engine**: Implements complex clinical rules where fields dynamically appear or disappear based on real-time data input (e.g., multi-fetus parameters).
+
+---
+
+### 💻 Technology Stack
+We utilize a modern, enterprise-grade stack focused on speed, reliability, and developer productivity:
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite |
+| **Styling** | Vanilla CSS (for precision), Tailwind CSS, Framer Motion (Animations) |
+| **State Management** | Zustand (Global State), LocalStorage (Persistence) |
+| **Backend** | Node.js, Express |
+| **Database/ORM** | PostgreSQL, Prisma |
+| **Infrastructure** | A4-Optimized CSS Print Engine |
+
+---
+
+### 👥 User Roles & Responsibilities
+The system is tailored to the specific operational needs of a medical clinic:
+
+*   **Receptionist**: The entry point of the workflow. Responsible for patient registration, updating records, and assigning initial scan types/trimesters.
+*   **Doctor**: The core clinical authority. Empowered to design custom protocol templates, conduct scans, review histories, and finalize medical reports.
+*   **Typist**: Clinical assistants who accelerate report generation by entering scan data into pre-defined templates for doctor review.
+*   **Admin**: The system overseer who manages user approvals, role assignments, and ensures overall data integrity.
+
+---
+
+### 🚀 Key Features
+*   **Drag-and-Drop Protocol Builder**: Allows doctors to create complex medical forms without writing a single line of code.
+*   **High-Density Clinical Matrices**: Specialized UI components for Biometry, Doppler, and Grid-style data entry, optimized for clinical accuracy.
+*   **Trimester-Aware Workflow**: Dynamically adjusts available scan options and templates based on the patient's pregnancy stage.
+*   **Unified Patient Longitudinal Record**: Integrated view of all historical scans and visit data during the active examination.
+*   **Clinical Grade Print Output**: Generates clean, professional A4 reports that automatically exclude irrelevant or empty fields, focusing strictly on diagnostic data.
+*   **Responsive Performance**: Optimized for both high-end clinical workstations and portable devices.
+
+---
+
+This system transforms a clinic's data entry from a bottleneck into a strategic asset, ensuring that doctors can focus on diagnosis while the platform handles the complexity of documentation.

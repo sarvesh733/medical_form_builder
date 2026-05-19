@@ -236,7 +236,7 @@ export default function ReceptionistRegistration() {
     }
   };
 
-  if (user?.role !== 'doctor' && user?.role !== 'receptionist' && user?.role !== 'admin') {
+  if (user?.role !== 'receptionist' && user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4 text-slate-900 dark:text-white">
         <motion.div
@@ -246,7 +246,7 @@ export default function ReceptionistRegistration() {
         >
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h1>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">Only doctors, receptionists and admins can access this page.</p>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">Only receptionists and admins can access this page.</p>
           <button
             onClick={() => navigate('/dashboard')}
             className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors"
@@ -259,7 +259,7 @@ export default function ReceptionistRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6 md:p-10 text-slate-900 dark:text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 sm:p-6 md:p-10 text-slate-900 dark:text-white">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
