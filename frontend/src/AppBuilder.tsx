@@ -456,6 +456,11 @@ const AppBuilder: React.FC = () => {
       return;
     }
 
+    // Reset template and form values immediately to avoid flash of stale data from the previous event
+    useStore.setState({ activeTemplate: null });
+    setFormValues({});
+    setReportStatus('Loading scan form...');
+
     fetchScanEvent(eventId)
       .then(async (event) => {
         let resolvedTemplate: MedicalTemplate | null = null;
