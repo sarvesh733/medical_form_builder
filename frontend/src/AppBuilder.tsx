@@ -271,7 +271,18 @@ const resolveTemplateFromScanType = async (scanType: string | undefined): Promis
 
       if (schema) {
         console.log(`[resolveTemplate] Using system default for ${scanType}`);
-        return schema as MedicalTemplate;
+        return {
+          id: `default-${scanType.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`,
+          name: schema.name ?? `${scanType} Template`,
+          scanType: schema.scanType as MedicalTemplate['scanType'],
+          sections: schema.sections ?? [],
+          version: schema.version ?? '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system',
+          persisted: false,
+          isDefault: true,
+        } as MedicalTemplate;
       }
       return null;
     }
@@ -369,7 +380,18 @@ const resolveTemplateFromScanType = async (scanType: string | undefined): Promis
     const schema = schemaEntry ? schemaEntry[1] : undefined;
     if (schema) {
       console.log(`[resolveTemplate] Fallback to system default for ${scanType}`);
-      return schema as MedicalTemplate;
+      return {
+        id: `default-${scanType.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`,
+        name: schema.name ?? `${scanType} Template`,
+        scanType: schema.scanType as MedicalTemplate['scanType'],
+        sections: schema.sections ?? [],
+        version: schema.version ?? '1.0.0',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 'system',
+        persisted: false,
+        isDefault: true,
+      } as MedicalTemplate;
     }
     return null;
   }
