@@ -261,7 +261,7 @@ const Dashboard: React.FC = () => {
         visit_date: visitDate,
       });
 
-      navigate(`/builder?eventId=${event.event_id}&templateId=${resolvedTemplate.id}`);
+      navigate(`/builder?eventId=${event.event_id}&templateId=${resolvedTemplate.id}&scanType=${encodeURIComponent(resolvedTemplate.scanType)}`);
     } catch (error) {
       setScanError(error instanceof Error ? error.message : 'Failed to create scan event');
     } finally {
@@ -385,9 +385,10 @@ const Dashboard: React.FC = () => {
   };
 
   const handleOpenVisitForm = (visit: ScanEventDetail) => {
-    // Only pass eventId - let AppBuilder resolve the template
-    // based on scan_type if no template_id exists
-    navigate(`/builder?eventId=${visit.event_id}`);
+    const templateQuery = visit.template_id ? `&templateId=${visit.template_id}` : '';
+    const scanType = visit.scan_type || visit.patient?.scan_type;
+    const scanTypeQuery = scanType ? `&scanType=${encodeURIComponent(scanType)}` : '';
+    navigate(`/builder?eventId=${visit.event_id}${templateQuery}${scanTypeQuery}`);
   };
 
   return (

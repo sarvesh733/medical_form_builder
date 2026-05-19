@@ -420,6 +420,7 @@ const AppBuilder: React.FC = () => {
 
   const eventId = searchParams.get('eventId');
   const templateIdFromUrl = searchParams.get('templateId');
+  const scanTypeFromUrl = searchParams.get('scanType');
   const hasEventContext = Boolean(eventId);
 
   // Template structure is locked if we are filling an event or if the template is already saved/persisted
@@ -443,23 +444,79 @@ const AppBuilder: React.FC = () => {
       return;
     }
 
-    if (!templateIdFromUrl) {
-      return;
+    // Reset form values immediately when event changes to avoid showing old field data
+    setFormValues({});
+
+    const store = useStore.getState();
+    let resolved: MedicalTemplate | null = null;
+
+    if (templateIdFromUrl) {
+      resolved = store.templates.find((t) => t.id === templateIdFromUrl) || null;
+      if (!resolved && templateIdFromUrl.startsWith('default-')) {
+        const scanTypePart = templateIdFromUrl.replace('default-', '');
+        const schemaEntry = Object.entries(DEFAULT_SCHEMAS).find(([key]) =>
+          key.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() === scanTypePart
+        );
+        if (schemaEntry) {
+          const [key, schema] = schemaEntry;
+          resolved = {
+            id: templateIdFromUrl,
+            name: schema.name ?? `${schema.scanType} Template`,
+            scanType: schema.scanType as MedicalTemplate['scanType'],
+            sections: schema.sections ?? [],
+            version: schema.version ?? '1.0.0',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            createdBy: 'system',
+            persisted: false,
+            isDefault: true,
+          } as MedicalTemplate;
+        }
+      }
     }
 
-    console.log(`[AppBuilder] Setting active template: ${templateIdFromUrl}`);
-    setActiveTemplate(templateIdFromUrl);
-  }, [eventId, templateIdFromUrl, setActiveTemplate]);
+    if (!resolved && scanTypeFromUrl) {
+      const schemaEntry = Object.entries(DEFAULT_SCHEMAS).find(([key, s]) => {
+        const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return normalize(key) === normalize(scanTypeFromUrl) || normalize(s.scanType || '') === normalize(scanTypeFromUrl);
+      });
+      if (schemaEntry) {
+        const [key, schema] = schemaEntry;
+        const generatedId = `default-${key.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`;
+        resolved = {
+          id: generatedId,
+          name: schema.name ?? `${schema.scanType} Template`,
+          scanType: schema.scanType as MedicalTemplate['scanType'],
+          sections: schema.sections ?? [],
+          version: schema.version ?? '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system',
+          persisted: false,
+          isDefault: true,
+        } as MedicalTemplate;
+      }
+    }
+
+    if (resolved) {
+      console.log(`[AppBuilder] Instantly resolved template: ${resolved.id}`);
+      useStore.setState((state) => ({
+        templates: [resolved!, ...state.templates.filter((t) => t.id !== resolved!.id)],
+        activeTemplate: resolved,
+      }));
+    } else if (templateIdFromUrl) {
+      setActiveTemplate(templateIdFromUrl);
+    } else {
+      setActiveTemplate(null);
+    }
+  }, [eventId, templateIdFromUrl, scanTypeFromUrl, setActiveTemplate]);
 
   useEffect(() => {
     if (!eventId) {
       return;
     }
 
-    // Reset template and form values immediately to avoid flash of stale data from the previous event
-    useStore.setState({ activeTemplate: null });
-    setFormValues({});
-    setReportStatus('Loading scan form...');
+    setReportStatus('Loading scan details...');
 
     fetchScanEvent(eventId)
       .then(async (event) => {
