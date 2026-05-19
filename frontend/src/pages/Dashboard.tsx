@@ -562,7 +562,6 @@ const Dashboard: React.FC = () => {
                                               <thead>
                                                 <tr className="border-b border-slate-300 dark:border-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                                                   <th className="text-left py-1.5 px-3">Type of Scan</th>
-                                                  <th className="text-left py-1.5 px-3">Doctor</th>
                                                   <th className="text-left py-1.5 px-3">Status</th>
                                                   <th className="text-left py-1.5 px-3">Open</th>
                                                 </tr>
@@ -579,7 +578,6 @@ const Dashboard: React.FC = () => {
                                                   .map((visit, idx) => (
                                                     <tr key={`${patient.patient_id}-scan-${idx}`} className="border-b border-slate-300/70 dark:border-slate-800/70">
                                                       <td className="py-1.5 px-3 text-slate-800 dark:text-slate-200">{visit.scan_type || visit.template?.scan_type || visit.template?.title || 'Scan'}</td>
-                                                      <td className="py-1.5 px-3 text-slate-700 dark:text-slate-300">{visit.doctor?.name || 'N/A'}</td>
                                                       <td className="py-1.5 px-3">
                                                         <span className={visit.status === 'completed' ? 'text-emerald-400' : 'text-yellow-400'}>{visit.status}</span>
                                                       </td>
